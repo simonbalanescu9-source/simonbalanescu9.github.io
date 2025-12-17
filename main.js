@@ -50,65 +50,57 @@ wall(40,4,0.5, 0,2, -20);
 wall(40,4,0.5, 0,2,  20);
 wall(0.5,4,40, -20,2, 0);
 wall(0.5,4,40,  20,2, 0);
-// ---------- Christmas Trees ----------
+// ---------- Christmas Trees (GUARANTEED VISIBLE) ----------
 function createChristmasTree(x, z) {
   const tree = new THREE.Group();
 
-  // Trunk
+  // trunk
   const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.22, 0.7, 12),
+    new THREE.CylinderGeometry(0.2, 0.25, 0.8, 12),
     new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
   );
-  trunk.position.y = 0.35;
+  trunk.position.y = 0.4;
   tree.add(trunk);
 
-  // Leaves (3 stacked cones)
-  const matLeaves = new THREE.MeshStandardMaterial({ color: 0x0f6b2f });
-  const c1 = new THREE.Mesh(new THREE.ConeGeometry(0.95, 1.2, 16), matLeaves);
-  c1.position.y = 1.05;
-  tree.add(c1);
+  // leaves
+  const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f7a3a });
 
-  const c2 = new THREE.Mesh(new THREE.ConeGeometry(0.75, 1.1, 16), matLeaves);
-  c2.position.y = 1.55;
-  tree.add(c2);
+  const l1 = new THREE.Mesh(new THREE.ConeGeometry(1.0, 1.2, 16), leavesMat);
+  l1.position.y = 1.2;
+  tree.add(l1);
 
-  const c3 = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.0, 16), matLeaves);
-  c3.position.y = 2.00;
-  tree.add(c3);
+  const l2 = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.1, 16), leavesMat);
+  l2.position.y = 1.8;
+  tree.add(l2);
 
-  // Star
+  const l3 = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.0, 16), leavesMat);
+  l3.position.y = 2.4;
+  tree.add(l3);
+
+  // star
   const star = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.18),
-    new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0x553300, emissiveIntensity: 0.8 })
+    new THREE.OctahedronGeometry(0.22),
+    new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffd700,
+      emissiveIntensity: 1
+    })
   );
-  star.position.y = 2.55;
+  star.position.y = 3.1;
   tree.add(star);
 
-  // Ornaments (tiny spheres)
-  const ornamentColors = [0xff3333, 0x33a1ff, 0xff66ff, 0xffffff];
-  for (let i = 0; i < 10; i++) {
-    const o = new THREE.Mesh(
-      new THREE.SphereGeometry(0.08, 12, 12),
-      new THREE.MeshStandardMaterial({ color: ornamentColors[i % ornamentColors.length] })
-    );
-    o.position.set(
-      (Math.random() - 0.5) * 0.9,
-      1.0 + Math.random() * 1.3,
-      (Math.random() - 0.5) * 0.9
-    );
-    tree.add(o);
-  }
-
-  tree.position.set(x, 0, z);
+  tree.position.set(x, 0.05, z);
   scene.add(tree);
-  return tree;
 }
 
-// Corners (inside your bounds; your camera clamp is about ±18.5)
-createChristmasTree(-17.5, -17.5);
-createChristmasTree(-17.5,  17.5);
-createChristmasTree( 17.5, -17.5);
-createChristmasTree( 17.5,  17.5);
+// PUT ONE TREE RIGHT IN FRONT OF PLAYER (TEST)
+createChristmasTree(0, 2);
+
+// STORE CORNERS (INSIDE WALLS)
+createChristmasTree(-15, -15);
+createChristmasTree(-15,  15);
+createChristmasTree( 15, -15);
+createChristmasTree( 15,  15);
 // ---------- Posters (Metal Pipes Ads) ----------
 function createPoster(text, x, y, z, rotY = 0, bg = "#ffd700", fg = "#000000") {
   const canvas = document.createElement("canvas");
