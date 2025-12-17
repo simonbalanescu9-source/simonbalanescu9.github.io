@@ -273,6 +273,15 @@ function animate(){
   last = now;
 
   move(dt);
+  // NPC movement
+npcs.forEach(npc => {
+  npc.position.z += npc.userData.dir * npc.userData.speed * dt;
+
+  if (npc.position.z > 14 || npc.position.z < -14) {
+    npc.userData.dir *= -1;
+    npc.rotation.y += Math.PI;
+  }
+});
   renderer.render(scene, camera);
 }
 animate();
