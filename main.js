@@ -554,6 +554,7 @@ const btnLeft     = document.getElementById("btnLeft");
 const btnRight    = document.getElementById("btnRight");
 const btnInteract = document.getElementById("btnInteract");
 const btnMug      = document.getElementById("btnMug");
+const btnJump     = document.getElementById("btnJump");
 const btnLookLeft  = document.getElementById("btnLookLeft");
 const btnLookRight = document.getElementById("btnLookRight");
 
