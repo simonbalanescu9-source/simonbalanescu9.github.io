@@ -327,9 +327,7 @@ function nearCheckout(){
   return (Math.abs(dx) < 2.5 && Math.abs(dz) < 2.5);
 }
 
-document.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() !== "e") return;
-
+function handleInteract(){
   // checkout
   if (nearCheckout()){
     if (cartTotal === 0) return toast("Your cart is empty.");
@@ -347,7 +345,6 @@ document.addEventListener("keydown", (e) => {
   const { name, price } = hit.userData;
   if (money < price) return toast("Not enough money!");
 
-  // “buy” it (remove from shelf and add to cart)
   money -= price;
   cartTotal += price;
   if (bought[name] !== undefined) bought[name] += 1;
@@ -357,6 +354,11 @@ document.addEventListener("keydown", (e) => {
 
   toast(`+ ${name} ($${price})`);
   updateUI();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() !== "e") return;
+  handleInteract();
 });
 // ---------- NPCs ----------
 const npcs = [];
