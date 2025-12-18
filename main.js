@@ -541,6 +541,23 @@ function handleInteract(){
     return;
   }
 
+function getNearestNPC(maxDistance = 3) {
+  let best = null;
+  let bestDistSq = maxDistance * maxDistance;
+
+  npcs.forEach(npc => {
+    const dx = npc.position.x - camera.position.x;
+    const dz = npc.position.z - camera.position.z;
+    const distSq = dx * dx + dz * dz;
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq;
+      best = npc;
+    }
+  });
+
+  return best;
+}
+
   // pick item
   const hit = lookHit();
   if (!hit) return;
