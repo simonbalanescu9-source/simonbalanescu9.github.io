@@ -323,7 +323,70 @@ document.addEventListener("mousemove", (e) => {
   pitch = Math.max(-1.2, Math.min(1.2, pitch));
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 });
+// ---------- Touch / Drag Look ----------
+let touchLookActive = false;
+let lastTouchX = 0;
+let lastTouchY = 0;
 
+const lookSensitivity = 0.0022;
+
+// Touch start: begin looking
+renderer.domElement.addEventListener("touchstart", (e) => {
+  if (e.touches.length !== 1) return; // one finger to look
+  touchLookActive = true;
+  lastTouchX = e.touches[0].clientX;
+  lastTouchY = e.touches[0].clientY;
+});
+
+// Touch move: rotate camera
+renderer.domElement.addEventListener("touchmove", (e) => {
+  if (!touchLookActive || e.touches.length !== 1) return;
+  const t = e.touches[0];
+  const dx = t.clientX - lastTouchX;
+  const dy = t.clientY - lastTouchY;
+  lastTouchX = t.clientX;
+  lastTouchY = t.clientY;
+
+  yaw   -= dx * lookSensitivity;
+  pitch -= dy * lookSensitivity;
+  pitch = Math.max(-1.2, Math.min(1.2, pitch));
+  camera.rotation.set(pitch, yaw, 0, "YXZ");
+  e.preventDefault();
+});
+
+// Touch end: stop looking
+renderer.domElement.addEventListener("touchend", () => {
+  touchLookActive = false;
+});
+
+// Optional: drag with mouse if pointer lock isn't active
+let mouseDragLook = false;
+renderer.domElement.addEventListener("mousedown", (e) => {
+  if (document.pointerLockElement !== renderer.domElement) {
+    mouseDragLook = true;
+    lastTouchX = e.clientX;
+    lastTouchY = e.clientY;
+  }
+});
+
+renderer.domElement.addEventListener("mouseup", () => {
+  mouseDragLook = false;
+});
+
+renderer.domElement.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement === renderer.domElement) return; // handled above
+  if (!mouseDragLook) return;
+
+  const dx = e.clientX - lastTouchX;
+  const dy = e.clientY - lastTouchY;
+  lastTouchX = e.clientX;
+  lastTouchY = e.clientY;
+
+  yaw   -= dx * lookSensitivity;
+  pitch -= dy * lookSensitivity;
+  pitch = Math.max(-1.2, Math.min(1.2, pitch));
+  camera.rotation.set(pitch, yaw, 0, "YXZ");
+});
 // Movement (no physics, but decent)
 function move(dt){
   const speed = (keys["shift"] ? 6.5 : 4.2);
