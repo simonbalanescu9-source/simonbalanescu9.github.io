@@ -275,7 +275,40 @@ let yaw = 0, pitch = 0;
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup",   e => keys[e.key.toLowerCase()] = false);
+// ---------- Touch Controls for Mobile ----------
+const btnUp       = document.getElementById("btnUp");
+const btnDown     = document.getElementById("btnDown");
+const btnLeft     = document.getElementById("btnLeft");
+const btnRight    = document.getElementById("btnRight");
+const btnInteract = document.getElementById("btnInteract");
 
+function bindHoldButton(btn, keyName){
+  if (!btn) return;
+  const start = (e) => { e.preventDefault(); keys[keyName] = true; };
+  const end   = (e) => { e.preventDefault(); keys[keyName] = false; };
+
+  btn.addEventListener("touchstart", start);
+  btn.addEventListener("touchend", end);
+  btn.addEventListener("mousedown", start);
+  btn.addEventListener("mouseup", end);
+  btn.addEventListener("mouseleave", end);
+}
+
+bindHoldButton(btnUp,    "w");
+bindHoldButton(btnDown,  "s");
+bindHoldButton(btnLeft,  "a");
+bindHoldButton(btnRight, "d");
+
+if (btnInteract){
+  btnInteract.addEventListener("click", (e) => {
+    e.preventDefault();
+    handleInteract();
+  });
+  btnInteract.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    handleInteract();
+  });
+}
 document.addEventListener("click", () => {
   if (document.pointerLockElement !== renderer.domElement) {
     renderer.domElement.requestPointerLock();
