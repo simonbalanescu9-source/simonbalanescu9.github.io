@@ -588,10 +588,12 @@ function createNPC(x, z, color = 0x88aaff) {
   npc.position.set(x, 0, z);
 
   // Movement data
-  npc.userData = {
+    npc.userData = {
     dir: Math.random() > 0.5 ? 1 : -1,
-    speed: 0.8 + Math.random() * 0.6
+    speed: 0.8 + Math.random() * 0.6,
+    wallet: 4 + Math.floor(Math.random() * 6) // 4–9 dollars
   };
+
 
   scene.add(npc);
   npcs.push(npc);
