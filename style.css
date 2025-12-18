@@ -32,3 +32,41 @@ body { margin: 0; overflow: hidden; font-family: system-ui, Arial, sans-serif; }
   cursor:pointer;
 }
 #musicBtn:hover{ opacity:.9; }
+#touchControls{
+  position:absolute;
+  bottom:16px;
+  right:16px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  user-select:none;
+}
+
+.tc-row{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+}
+
+.tc-btn{
+  width:54px;
+  height:54px;
+  border-radius:14px;
+  border:none;
+  background:rgba(0,0,0,0.75);
+  color:white;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.tc-wide{
+  width:180px;
+}
+
+/* On bigger screens you can hide them if you want */
+@media (min-width: 900px){
+  #touchControls{
+    opacity:0.3;
+  }
+}
