@@ -580,6 +580,28 @@ document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() !== "e") return;
   handleInteract();
 });
+
+function handleMug(){
+  const npc = getNearestNPC();
+  if (!npc) {
+    toast("Nobody close enough to mug.");
+    return;
+  }
+
+  if (!npc.userData || npc.userData.wallet <= 0) {
+    toast("They have no money left.");
+    return;
+  }
+
+  const steal = 1 + Math.floor(Math.random() * 4); // 1–4
+  const amount = Math.min(steal, npc.userData.wallet);
+
+  npc.userData.wallet -= amount;
+  money += amount;
+  toast(`You stole $${amount}. (They have $${npc.userData.wallet} left)`);
+  updateUI();
+}
+
 // ---------- NPCs ----------
 const npcs = [];
 
