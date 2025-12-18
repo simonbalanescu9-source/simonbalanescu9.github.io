@@ -70,3 +70,16 @@ body { margin: 0; overflow: hidden; font-family: system-ui, Arial, sans-serif; }
     opacity:0.3;
   }
 }
+#lookControls{
+  position:absolute;
+  bottom:16px;
+  left:16px;
+  display:flex;
+  gap:8px;
+  user-select:none;
+}
+
+#lookControls .tc-btn{
+  width:60px;
+  height:60px;
+}
