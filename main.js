@@ -542,9 +542,13 @@ const bought = { Apple: 0, Milk: 0, Cereal: 0 };
 function updateUI(){
   moneyText.textContent = `Money: $${money}`;
   cartText.textContent  = `Cart: $${cartTotal}`;
+  if (molotovText) {
+    molotovText.textContent = `Molotovs: ${molotovs}`;
+  }
   const parts = Object.keys(list).map(k => `${k} x${Math.max(0, list[k]-bought[k])}`);
   listText.textContent = `List: ${parts.join(", ")}`;
 }
+
 updateUI();
 
 // ========== ITEMS ==========
