@@ -435,6 +435,7 @@ function createFishingPoster(x, y, z, rotY = 0){
   scene.add(poster);
 }
 
+createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
 // ========== GAME DATA ==========
 let money = 20;
