@@ -360,6 +360,94 @@ wall(40,4,0.5, 0,2, -20);
 wall(40,4,0.5, 0,2,  20);
 wall(0.5,4,40, -20,2, 0);
 wall(0.5,4,40,  20,2, 0);
+// ========== METAL PIPES POSTERS ==========
+function createPoster(x, y, z, rotY = 0) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+
+  // yellow background
+  ctx.fillStyle = "#ffd700";
+  ctx.fillRect(0, 0, 512, 512);
+
+  // black border
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 16;
+  ctx.strokeRect(8, 8, 496, 496);
+
+  // title text
+  ctx.fillStyle = "#000";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font = "900 84px Arial";
+  ctx.fillText("METAL", 256, 210);
+  ctx.fillText("PIPES", 256, 310);
+
+  ctx.font = "bold 28px Arial";
+  ctx.fillText("STRONG • LOUD • RELIABLE", 256, 395);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex,
+    side: THREE.DoubleSide,
+    emissive: new THREE.Color(0x222222),
+    emissiveIntensity: 0.6
+  });
+
+  const poster = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
+  poster.position.set(x, y, z);
+  poster.rotation.y = rotY;
+  scene.add(poster);
+}
+
+// same placements as your old script
+createPoster( 0,   2.2, -18.8,  0);
+createPoster(-18.8,2.2,   0,    Math.PI/2);
+createPoster( 18.8,2.2,   4,   -Math.PI/2);
+createPoster( 10,  2.2, 18.8,  Math.PI);
+
+// ========== FISHING POSTER ==========
+function createFishingPoster(x, y, z, rotY = 0){
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#4fa9ff";
+  ctx.fillRect(0, 0, 512, 512);
+
+  ctx.strokeStyle = "#002347";
+  ctx.lineWidth = 16;
+  ctx.strokeRect(8, 8, 496, 496);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 60px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Fishing", 256, 170);
+  ctx.fillText("Vacation!", 256, 260);
+
+  ctx.font = "900 32px Arial";
+  ctx.fillText("bloxdapp.github.io", 256, 345);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex,
+    side: THREE.DoubleSide,
+    emissive: new THREE.Color(0x003366),
+    emissiveIntensity: 0.6
+  });
+
+  const poster = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
+  poster.position.set(x, y, z);
+  poster.rotation.y = rotY;
+  scene.add(poster);
+}
+
+// same spot as before
+createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
 // ========== CHECKOUT COUNTER & ZONE ==========
 const counter = new THREE.Mesh(
