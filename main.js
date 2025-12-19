@@ -329,19 +329,17 @@ const checkoutZone = new THREE.Mesh(
 checkoutZone.position.set(-14, 0.05, 10);
 scene.add(checkoutZone);
 
-// Egg cashier
-function createCashier(x, z) {
-  const cashier = new THREE.Group();
+// Egg cashierfunction createCashier(x, z) {
+  const cashierGroup = new THREE.Group();
 
   const body = new THREE.Mesh(
     new THREE.SphereGeometry(0.55, 24, 24),
     new THREE.MeshStandardMaterial({ color: 0xfff3d1 })
   );
   body.scale.y = 1.4;
-  cashier.add(body);
+  cashierGroup.add(body);
 
-  cashier.rotation.y = Math.PI; // face shoppers
-
+  // eyes, mouth etc – same as before, but added to cashierGroup
   const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const eyeBlackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
@@ -352,7 +350,7 @@ function createCashier(x, z) {
   const rightEyeWhite = leftEyeWhite.clone();
   leftEyeWhite.position.set(-0.16, 0.25, 0.45);
   rightEyeWhite.position.set(0.16, 0.25, 0.45);
-  cashier.add(leftEyeWhite, rightEyeWhite);
+  cashierGroup.add(leftEyeWhite, rightEyeWhite);
 
   const leftPupil = new THREE.Mesh(
     new THREE.SphereGeometry(0.04, 12, 12),
@@ -361,7 +359,7 @@ function createCashier(x, z) {
   const rightPupil = leftPupil.clone();
   leftPupil.position.set(-0.16, 0.24, 0.50);
   rightPupil.position.set(0.16, 0.24, 0.50);
-  cashier.add(leftPupil, rightPupil);
+  cashierGroup.add(leftPupil, rightPupil);
 
   const mouth = new THREE.Mesh(
     new THREE.CylinderGeometry(0.07, 0.07, 0.02, 16),
@@ -369,12 +367,18 @@ function createCashier(x, z) {
   );
   mouth.rotation.x = Math.PI / 2;
   mouth.position.set(0, 0.12, 0.50);
-  cashier.add(mouth);
+  cashierGroup.add(mouth);
 
-  cashier.position.set(x, 0.55, z);
-  scene.add(cashier);
+  cashierGroup.rotation.y = Math.PI;
+  cashierGroup.position.set(x, 0.55, z);
+  scene.add(cashierGroup);
+
+  return cashierGroup; // IMPORTANT
 }
-createCashier(-14, 13);
+
+// store a reference
+cashier = createCashier(-14, 13);
+
 
 // ========== SHELVES ==========
 function shelf(x, z, length = 14){
