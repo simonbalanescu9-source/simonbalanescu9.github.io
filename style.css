@@ -97,6 +97,7 @@ body { margin: 0; overflow: hidden; font-family: system-ui, Arial, sans-serif; }
   display:none;
   z-index:20;
   max-width:260px;
+  cursor: default;   /* 👈 add this line */
 }
 
 #shopPanel.show{
