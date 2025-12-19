@@ -814,48 +814,261 @@ function createFlyingPig(fromLeft){
   pigs.push(pig);
 }
 
-// ========== FUNNY VENDING MACHINE ==========
+// ========== VENDING MACHINE 2.0 (MORE REALISTIC) ==========
+
+// Re-usable soda can mesh (used inside the machine and for the dropped drink)
+function createSodaCanMesh({ glow = false } = {}) {
+  // label texture
+  const labelCanvas = document.createElement("canvas");
+  labelCanvas.width = 256;
+  labelCanvas.height = 128;
+  const lctx = labelCanvas.getContext("2d");
+
+  // gradient background
+  const grad = lctx.createLinearGradient(0, 0, 256, 128);
+  grad.addColorStop(0, "#ff3b3b");
+  grad.addColorStop(1, "#ff9a3b");
+  lctx.fillStyle = grad;
+  lctx.fillRect(0, 0, labelCanvas.width, labelCanvas.height);
+
+  // logo stripe
+  lctx.fillStyle = "rgba(255,255,255,0.25)";
+  lctx.beginPath();
+  lctx.moveTo(-20, 20);
+  lctx.quadraticCurveTo(120, -10, 276, 40);
+  lctx.quadraticCurveTo(120, 80, -20, 50);
+  lctx.closePath();
+  lctx.fill();
+
+  // text
+  lctx.fillStyle = "#ffffff";
+  lctx.font = "bold 42px Arial";
+  lctx.textAlign = "center";
+  lctx.textBaseline = "middle";
+  lctx.fillText("ZOOM COLA", 128, 64);
+
+  const labelTex = new THREE.CanvasTexture(labelCanvas);
+  labelTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    metalness: 0.85,
+    roughness: 0.25
+  });
+
+  const bodyMat = new THREE.MeshStandardMaterial({
+    map: labelTex,
+    metalness: 0.4,
+    roughness: 0.35,
+    emissive: glow ? new THREE.Color(0xff5533) : new THREE.Color(0x000000),
+    emissiveIntensity: glow ? 0.4 : 0.0
+  });
+
+  const can = new THREE.Group();
+
+  // cylinder side
+  const side = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.22, 0.7, 24, 1, true),
+    bodyMat
+  );
+  can.add(side);
+
+  // top + bottom caps
+  const topCap = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.22, 0.02, 24),
+    metalMat
+  );
+  topCap.position.y = 0.35;
+  can.add(topCap);
+
+  const bottomCap = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.22, 0.02, 24),
+    metalMat
+  );
+  bottomCap.position.y = -0.35;
+  can.add(bottomCap);
+
+  // little tab on top
+  const tab = new THREE.Mesh(
+    new THREE.BoxGeometry(0.16, 0.01, 0.05),
+    metalMat
+  );
+  tab.position.set(0.07, 0.37, 0);
+  can.add(tab);
+
+  return can;
+}
+
 function createVendingMachine(x, z){
   const vm = new THREE.Group();
 
+  // main body
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 2.1, 0.8),
+    new THREE.BoxGeometry(1.3, 2.2, 0.9),
     new THREE.MeshStandardMaterial({
-      color: 0x3b3bff,
-      metalness: 0.2,
+      color: 0x273c75,
+      metalness: 0.4,
+      roughness: 0.55
+    })
+  );
+  body.position.y = 1.1;
+  vm.add(body);
+
+  // front door frame
+  const doorFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(0.9, 1.7, 0.05),
+    new THREE.MeshStandardMaterial({
+      color: 0x101525,
+      metalness: 0.55,
+      roughness: 0.4
+    })
+  );
+  doorFrame.position.set(-0.15, 1.2, 0.46);
+  vm.add(doorFrame);
+
+  // glass
+  const glass = new THREE.Mesh(
+    new THREE.BoxGeometry(0.82, 1.6, 0.03),
+    new THREE.MeshStandardMaterial({
+      color: 0x88cfff,
+      transparent: true,
+      opacity: 0.25,
+      metalness: 0.1,
+      roughness: 0.05
+    })
+  );
+  glass.position.set(-0.15, 1.2, 0.475);
+  vm.add(glass);
+
+  // internal shelves + cans (purely visual)
+  const shelves = 4;
+  const cols = 3;
+  for (let r = 0; r < shelves; r++) {
+    const shelfY = 1.6 - r * 0.42;
+
+    const shelfBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(0.78, 0.02, 0.6),
+      new THREE.MeshStandardMaterial({
+        color: 0xcccccc,
+        metalness: 0.5,
+        roughness: 0.5
+      })
+    );
+    shelfBoard.position.set(-0.15, shelfY - 0.2, 0.35);
+    vm.add(shelfBoard);
+
+    for (let c = 0; c < cols; c++) {
+      const can = createSodaCanMesh({ glow: false });
+      can.position.set(-0.32 + c * 0.3, shelfY, 0.35);
+      vm.add(can);
+    }
+  }
+
+  // payment panel background
+  const panel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.32, 1.2, 0.06),
+    new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      metalness: 0.6,
+      roughness: 0.4
+    })
+  );
+  panel.position.set(0.45, 1.25, 0.45);
+  vm.add(panel);
+
+  // small LCD screen
+  const screenCanvas = document.createElement("canvas");
+  screenCanvas.width = 256;
+  screenCanvas.height = 128;
+  const sctx = screenCanvas.getContext("2d");
+  sctx.fillStyle = "#003322";
+  sctx.fillRect(0, 0, 256, 128);
+  sctx.fillStyle = "#33ff99";
+  sctx.font = "bold 34px Arial";
+  sctx.textAlign = "center";
+  sctx.textBaseline = "middle";
+  sctx.fillText("SODA $5", 128, 60);
+  const screenTex = new THREE.CanvasTexture(screenCanvas);
+
+  const screen = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.16, 0.02),
+    new THREE.MeshStandardMaterial({
+      map: screenTex,
+      emissive: new THREE.Color(0x009966),
+      emissiveIntensity: 0.8
+    })
+  );
+  screen.position.set(0.45, 1.55, 0.48);
+  vm.add(screen);
+
+  // keypad
+  const keyMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+  const keyGeo = new THREE.BoxGeometry(0.06, 0.04, 0.02);
+  const startY = 1.30;
+  const startX = 0.37;
+  const keyGap = 0.07;
+
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      const key = new THREE.Mesh(keyGeo, keyMat);
+      key.position.set(
+        startX + col * keyGap,
+        startY - row * keyGap,
+        0.48
+      );
+      vm.add(key);
+    }
+  }
+
+  // coin slot
+  const coinSlot = new THREE.Mesh(
+    new THREE.BoxGeometry(0.14, 0.03, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.3 })
+  );
+  coinSlot.position.set(0.45, 0.98, 0.48);
+  vm.add(coinSlot);
+
+  // item pickup compartment
+  const pickup = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 0.2, 0.08),
+    new THREE.MeshStandardMaterial({
+      color: 0x050505,
+      metalness: 0.3,
       roughness: 0.6
     })
   );
-  body.position.y = 1.05;
-  vm.add(body);
+  pickup.position.set(-0.15, 0.5, 0.47);
+  vm.add(pickup);
 
-  const screen = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.6, 0.05),
+  // silly neon title on top
+  const topCanvas = document.createElement("canvas");
+  topCanvas.width = 512;
+  topCanvas.height = 128;
+  const tctx2 = topCanvas.getContext("2d");
+  tctx2.fillStyle = "#000000";
+  tctx2.fillRect(0, 0, 512, 128);
+  tctx2.fillStyle = "#ff66ff";
+  tctx2.font = "bold 52px Arial";
+  tctx2.textAlign = "center";
+  tctx2.textBaseline = "middle";
+  tctx2.fillText("FIZZY FRIEND", 256, 64);
+  const topTex = new THREE.CanvasTexture(topCanvas);
+
+  const topSign = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.25, 0.08),
     new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      emissive: 0x33ffcc,
+      map: topTex,
+      emissive: new THREE.Color(0xff44ff),
       emissiveIntensity: 0.7
     })
   );
-  screen.position.set(0, 1.4, 0.42);
-  vm.add(screen);
+  topSign.position.set(0, 2.3, 0.42);
+  vm.add(topSign);
 
-  const buttonMat = new THREE.MeshStandardMaterial({ color: 0xffc107 });
-  for (let i = 0; i < 3; i++){
-    const btn = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.12, 0.05),
-      buttonMat
-    );
-    btn.position.set(0.4, 1.0 - i * 0.18, 0.43);
-    vm.add(btn);
-  }
-
-  const slot = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.15, 0.06),
-    new THREE.MeshStandardMaterial({ color: 0x111111 })
-  );
-  slot.position.set(0, 0.55, 0.44);
-  vm.add(slot);
+  // subtle glow light near the machine
+  const glowLight = new THREE.PointLight(0x55ccff, 0.3, 6);
+  glowLight.position.set(x, 2.0, z + 0.4);
+  scene.add(glowLight);
 
   vm.position.set(x, 0, z);
   vm.rotation.y = Math.PI; // face middle of store
@@ -868,14 +1081,7 @@ vendingMachine = createVendingMachine(14, 5);
 
 // drink from vending machine (already paid)
 function spawnVendingDrink(x, y, z){
-  const drink = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.2, 0.7, 16),
-    new THREE.MeshStandardMaterial({
-      color: 0x55c5ff,
-      emissive: 0x224488,
-      emissiveIntensity: 0.6
-    })
-  );
+  const drink = createSodaCanMesh({ glow: true });
   drink.position.set(x, y, z);
 
   drink.userData = {
@@ -888,6 +1094,7 @@ function spawnVendingDrink(x, y, z){
   scene.add(drink);
   items.push(drink);
 }
+
 
 function nearVending(maxDistance = 2.5){
   if (!vendingMachine) return false;
