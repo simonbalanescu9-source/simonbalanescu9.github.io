@@ -83,3 +83,63 @@ body { margin: 0; overflow: hidden; font-family: system-ui, Arial, sans-serif; }
   width:60px;
   height:60px;
 }
+/* Egg shop panel */
+#shopPanel{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.82);
+  color:white;
+  padding:14px 16px;
+  border-radius:12px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  display:none;
+  z-index:20;
+  max-width:260px;
+}
+
+#shopPanel.show{
+  display:block;
+}
+
+.shop-inner{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.shop-title{
+  font-weight:800;
+  font-size:18px;
+  margin-bottom:6px;
+  text-align:center;
+}
+
+.shop-item{
+  font-size:14px;
+  opacity:0.9;
+}
+
+.shop-btn{
+  margin-top:4px;
+  padding:8px;
+  border:none;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  background:white;
+  color:#111;
+}
+
+.shop-btn.shop-close{
+  background:#ff6666;
+  color:white;
+}
+
+/* On small screens, make sure the panel is above touch controls */
+@media (max-width: 900px){
+  #shopPanel{
+    z-index:50;
+  }
+}
