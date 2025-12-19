@@ -1879,6 +1879,14 @@ function animate(){
       pigs.splice(i, 1);
     }
   }
+  // Keep gorilla speech facing the player
+  if (gorillaSpeech) {
+    gorillaSpeech.lookAt(
+      camera.position.x,
+      gorillaSpeech.position.y,
+      camera.position.z
+    );
+  }
 
   renderer.render(scene, camera);
 }
