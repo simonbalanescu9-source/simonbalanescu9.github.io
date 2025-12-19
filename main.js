@@ -206,7 +206,32 @@ renderer.domElement.addEventListener("touchcancel", () => {
   touchLookActive = false;
 });
 
-// ========== TILED FLOOR ==========
+// ========== GAME DATA ==========
+let money = 20;
+let cartTotal = 0;
+let molotovs = 0;
+let hasAK = false;
+let ammo  = 0;
+
+const list = { Apple: 2, Milk: 1, Cereal: 1 };
+const bought = { Apple: 0, Milk: 0, Cereal: 0 };
+
+const MOLOTOV_COST = 15;
+const AK_COST      = 30;
+
+// ========== ARRAYS ==========
+const items = [];
+const npcs = [];
+const molotovsThrown = [];
+const bullets = [];
+const clouds = [];
+const pigs   = [];
+let pigSpawnTimer = 6 + Math.random() * 10;
+
+// vending machine ref
+let vendingMachine = null;
+
+// ========== FLOOR ==========
 const floorSize = 40;
 const tileCanvas = document.createElement("canvas");
 tileCanvas.width = 1024;
@@ -557,20 +582,6 @@ function createFishingPoster(x, y, z, rotY = 0){
 
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
-// ========== GAME DATA ==========
-let money = 20;
-let cartTotal = 0;
-let molotovs = 0;
-let hasAK = false;
-let ammo  = 0;
-
-const list = { Apple: 2, Milk: 1, Cereal: 1 };
-const bought = { Apple: 0, Milk: 0, Cereal: 0 };
-
-// shop prices
-const MOLOTOV_COST = 15;
-const AK_COST      = 30;
-
 // ========== GUN (VIEWMODEL) ==========
 let gun = null;
 let gunMuzzle = null;
@@ -578,7 +589,6 @@ let gunMuzzle = null;
 function createGun(){
   const group = new THREE.Group();
 
-  // main body (along Z, pointing forward = -Z)
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(0.2, 0.2, 0.8),
     new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.3 })
@@ -586,7 +596,6 @@ function createGun(){
   body.position.set(0, 0, -0.2);
   group.add(body);
 
-  // barrel (forward, -Z)
   const barrel = new THREE.Mesh(
     new THREE.BoxGeometry(0.12, 0.12, 0.7),
     new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 })
@@ -594,7 +603,6 @@ function createGun(){
   barrel.position.set(0, 0, -0.8);
   group.add(barrel);
 
-  // stock (towards +Z)
   const stock = new THREE.Mesh(
     new THREE.BoxGeometry(0.25, 0.25, 0.4),
     new THREE.MeshStandardMaterial({ color: 0x333333 })
@@ -602,7 +610,6 @@ function createGun(){
   stock.position.set(0, -0.02, 0.35);
   group.add(stock);
 
-  // grip (downwards)
   const grip = new THREE.Mesh(
     new THREE.BoxGeometry(0.15, 0.3, 0.15),
     new THREE.MeshStandardMaterial({ color: 0x111111 })
@@ -610,12 +617,10 @@ function createGun(){
   grip.position.set(0.05, -0.3, -0.1);
   group.add(grip);
 
-  // muzzle reference point at the end of the barrel
   const muzzle = new THREE.Object3D();
   muzzle.position.set(0, 0, -1.15);
   group.add(muzzle);
 
-  // position on screen: bottom-right-ish, slight tilt
   group.position.set(0.5, -0.35, -0.8);
   group.rotation.set(-0.1, 0, 0);
 
@@ -632,6 +637,7 @@ function updateGunVisibility(){
   gun.visible = hasAK;
 }
 
+// ========== UI UPDATE ==========
 function updateUI(){
   moneyText.textContent = `Money: $${money}`;
   cartText.textContent  = `Cart: ${cartTotal === 0 ? "$0" : "$" + cartTotal}`;
@@ -653,13 +659,12 @@ function updateUI(){
 updateUI();
 
 // ========== ITEMS ==========
-const items = [];
 const itemMat = (color) => new THREE.MeshStandardMaterial({ color });
 
-function createItem(name, price, x, y, z, color){
+function createItem(name, price, x, y, z, color, paid=false){
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), itemMat(color));
   mesh.position.set(x, y, z);
-  mesh.userData = { type:"item", name, price, paid:false };
+  mesh.userData = { type:"item", name, price, paid };
   scene.add(mesh);
   items.push(mesh);
 }
@@ -671,52 +676,33 @@ createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
 createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
 createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 
-// ========== NPCs, PROJECTILES & SKY ==========
-const npcs = [];
-const molotovsThrown = [];
-const bullets = []; // visible bullets
-
-// sky things
-const clouds = [];
-const pigs   = [];
-let pigSpawnTimer = 6 + Math.random() * 10;
-
-// vending machine
-let vendingMachine = null;
-
+// ========== NPC SHOPPERS ==========
 function createNPC(x, z, shirtColor = 0x88aaff) {
   const npc = new THREE.Group();
 
-  // legs
   const legMat = new THREE.MeshStandardMaterial({ color: 0x333366 });
   const legGeo = new THREE.BoxGeometry(0.18, 0.8, 0.18);
 
   const leftLeg = new THREE.Mesh(legGeo, legMat);
   leftLeg.position.set(-0.12, 0.4, 0);
-
   const rightLeg = leftLeg.clone();
   rightLeg.position.x = 0.12;
-
   npc.add(leftLeg, rightLeg);
 
-  // torso
   const bodyGeo = new THREE.BoxGeometry(0.6, 0.9, 0.3);
   const bodyMat = new THREE.MeshStandardMaterial({ color: shirtColor });
   const body = new THREE.Mesh(bodyGeo, bodyMat);
   body.position.set(0, 1.25, 0);
   npc.add(body);
 
-  // arms
   const armGeo = new THREE.BoxGeometry(0.16, 0.7, 0.16);
   const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
-
   const leftArm = new THREE.Mesh(armGeo, armMat);
   leftArm.position.set(-0.4, 1.25, 0);
   const rightArm = leftArm.clone();
   rightArm.position.x = 0.4;
   npc.add(leftArm, rightArm);
 
-  // head
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.25, 16, 16),
     new THREE.MeshStandardMaterial({ color: 0xffe0bd })
@@ -724,10 +710,8 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   head.position.set(0, 2.0, 0);
   npc.add(head);
 
-  // face
   const eyeGeo = new THREE.SphereGeometry(0.03, 12, 12);
   const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-
   const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
   const rightEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
   leftEye.position.set(-0.06, 2.04, 0.23);
@@ -741,7 +725,6 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   mouth.position.set(0, 1.93, 0.24);
   npc.add(mouth);
 
-  // hair cap
   const hair = new THREE.Mesh(
     new THREE.SphereGeometry(0.26, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0x332211 })
@@ -797,7 +780,7 @@ function createCloud(x, z){
   clouds.push(cloud);
 }
 
-// spawn some initial clouds
+// initial clouds
 for (let i = 0; i < 7; i++){
   const x = -18 + Math.random() * 36;
   const z = -12 + Math.random() * 24;
@@ -812,14 +795,12 @@ function createFlyingPig(fromLeft){
   const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
   const black = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
-  // body
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(1.4, 0.8, 0.6),
     pink
   );
   pig.add(body);
 
-  // head
   const head = new THREE.Mesh(
     new THREE.BoxGeometry(0.7, 0.6, 0.6),
     pink
@@ -827,7 +808,6 @@ function createFlyingPig(fromLeft){
   head.position.set(0.8, 0.1, 0);
   pig.add(head);
 
-  // snout
   const snout = new THREE.Mesh(
     new THREE.CylinderGeometry(0.18, 0.18, 0.25, 12),
     pink
@@ -836,7 +816,6 @@ function createFlyingPig(fromLeft){
   snout.position.set(1.25, 0.05, 0);
   pig.add(snout);
 
-  // eyes
   const eyeGeo = new THREE.SphereGeometry(0.06, 12, 12);
   const leftEye  = new THREE.Mesh(eyeGeo, black);
   const rightEye = new THREE.Mesh(eyeGeo, black);
@@ -844,7 +823,6 @@ function createFlyingPig(fromLeft){
   rightEye.position.set(0.95, 0.23, -0.15);
   pig.add(leftEye, rightEye);
 
-  // ears
   const earGeo = new THREE.BoxGeometry(0.2, 0.35, 0.1);
   const leftEar  = new THREE.Mesh(earGeo, pink);
   const rightEar = new THREE.Mesh(earGeo, pink);
@@ -852,7 +830,6 @@ function createFlyingPig(fromLeft){
   rightEar.position.set(0.7, 0.5, -0.18);
   pig.add(leftEar, rightEar);
 
-  // wings
   const wingGeo = new THREE.BoxGeometry(0.1, 0.4, 0.8);
   const leftWing  = new THREE.Mesh(wingGeo, white);
   const rightWing = new THREE.Mesh(wingGeo, white);
@@ -923,16 +900,15 @@ function createVendingMachine(x, z){
   vm.add(slot);
 
   vm.position.set(x, 0, z);
-  vm.rotation.y = Math.PI; // facing toward centre
+  vm.rotation.y = Math.PI; // face center of store
 
   scene.add(vm);
   return vm;
 }
 
-// call it in a free area near the front-right wall
 vendingMachine = createVendingMachine(14, 5);
 
-// drink spawned from vending machine (already paid)
+// drink from vending machine (already paid)
 function spawnVendingDrink(x, y, z){
   const drink = new THREE.Mesh(
     new THREE.CylinderGeometry(0.2, 0.2, 0.7, 16),
@@ -955,7 +931,6 @@ function spawnVendingDrink(x, y, z){
   items.push(drink);
 }
 
-// helper: near vending machine?
 function nearVending(maxDistance = 2.5){
   if (!vendingMachine) return false;
   const dx = camera.position.x - vendingMachine.position.x;
@@ -971,7 +946,6 @@ function useVendingMachine(){
   }
   money -= cost;
 
-  // spawn drink just in front of the machine
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(vendingMachine.rotation);
   const spawnPos = vendingMachine.position.clone().add(forward.multiplyScalar(1.0));
   spawnPos.y = 0.6;
@@ -1126,7 +1100,6 @@ function handleInteract(){
 
   const { name, price, paid } = hit.userData;
 
-  // normal shelf items: pay now + add to cart
   if (!paid) {
     if (money < price) {
       toast("Not enough money!");
@@ -1245,12 +1218,10 @@ function shootAK(){
   ammo -= 1;
   updateUI();
 
-  // direction from camera forward
   const dir = new THREE.Vector3(0, 0, -1)
     .applyEuler(camera.rotation)
     .normalize();
 
-  // get origin at muzzle if available, else from camera
   let origin;
   if (gunMuzzle){
     origin = new THREE.Vector3();
@@ -1259,7 +1230,6 @@ function shootAK(){
     origin = camera.position.clone();
   }
 
-  // ----- INSTANT HIT (RAYCAST) -----
   raycaster.set(origin, dir);
   const hits = raycaster.intersectObjects(npcs, true);
 
@@ -1279,7 +1249,6 @@ function shootAK(){
     }
   }
 
-  // ----- VISIBLE BULLET FROM MUZZLE -----
   if (gunMuzzle){
     const muzzlePos = new THREE.Vector3();
     gunMuzzle.getWorldPosition(muzzlePos);
@@ -1416,7 +1385,6 @@ function animate(){
 
   move(dt);
 
-  // gravity / jump
   verticalVelocity += GRAVITY * dt;
   camera.position.y += verticalVelocity * dt;
 
@@ -1425,7 +1393,6 @@ function animate(){
     verticalVelocity = 0;
   }
 
-  // keep camera rotation in sync
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
   // NPC movement
@@ -1484,7 +1451,7 @@ function animate(){
     }
   }
 
-  // Bullets (visual only, straight line from muzzle)
+  // Bullets
   for (let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
     b.mesh.position.addScaledVector(b.velocity, dt);
@@ -1498,7 +1465,7 @@ function animate(){
     }
   }
 
-  // ===== CLOUD MOVEMENT =====
+  // Clouds
   for (let i = 0; i < clouds.length; i++){
     const c = clouds[i];
     const data = c.userData;
@@ -1511,7 +1478,7 @@ function animate(){
     }
   }
 
-  // ===== PIG SPAWNING =====
+  // Pigs
   pigSpawnTimer -= dt;
   if (pigSpawnTimer <= 0){
     const fromLeft = Math.random() > 0.5;
@@ -1519,13 +1486,11 @@ function animate(){
     pigSpawnTimer = 6 + Math.random() * 10;
   }
 
-  // ===== PIG MOVEMENT =====
   for (let i = pigs.length - 1; i >= 0; i--){
     const pig = pigs[i];
     const data = pig.userData;
 
     pig.position.x += data.dir * data.speed * dt;
-
     data.phase += dt * 2.0;
     pig.position.y = data.baseY + Math.sin(data.phase) * 0.3;
 
