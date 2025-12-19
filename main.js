@@ -843,6 +843,14 @@ if (btnJump){
   btnJump.addEventListener("click", h3);
   btnJump.addEventListener("touchstart", h3);
 }
+if (btnThrow){
+  const h4 = (e) => {
+    e.preventDefault();
+    throwMolotov();
+  };
+  btnThrow.addEventListener("click", h4);
+  btnThrow.addEventListener("touchstart", h4);
+}
 
 // ========== MOVEMENT & LOOP ==========
 function move(dt){
