@@ -1015,10 +1015,12 @@ function shootAK(){
   ammo -= 1;
   updateUI();
 
-  // direction for ray + bullet
-  const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize();
+  // direction from camera forward
+  const dir = new THREE.Vector3(0, 0, -1)
+    .applyEuler(camera.rotation)
+    .normalize();
 
-  // raycast from camera (instant hit)
+  // ----- INSTANT HIT (RAYCAST) -----
   const origin = camera.position.clone();
   raycaster.set(origin, dir);
   const hits = raycaster.intersectObjects(npcs, true);
@@ -1027,11 +1029,8 @@ function shootAK(){
     let obj = hits[0].object;
     let hitNpc = null;
     while (obj && !hitNpc){
-      if (npcs.includes(obj)) {
-        hitNpc = obj;
-        break;
-      }
-      obj = obj.parent;
+      if (npcs.includes(obj)) hitNpc = obj;
+      else obj = obj.parent;
     }
 
     if (hitNpc){
@@ -1041,6 +1040,31 @@ function shootAK(){
       toast("💥 NPC shot!");
     }
   }
+
+  // ----- VISIBLE BULLET FROM MUZZLE -----
+  if (gunMuzzle){
+    const muzzlePos = new THREE.Vector3();
+    gunMuzzle.getWorldPosition(muzzlePos);
+
+    const bulletMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 8),
+      new THREE.MeshStandardMaterial({
+        color: 0xffff55,
+        emissive: 0xffee88,
+        emissiveIntensity: 0.7
+      })
+    );
+    bulletMesh.position.copy(muzzlePos);
+    scene.add(bulletMesh);
+
+    const speed = 40;
+    bullets.push({
+      mesh: bulletMesh,
+      velocity: dir.clone().multiplyScalar(speed),
+      life: 1.5
+    });
+  }
+}
 
   // visible bullet from muzzle
   if (gunMuzzle){
