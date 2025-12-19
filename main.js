@@ -292,14 +292,16 @@ const santaWallMat = new THREE.MeshStandardMaterial({
 
 
 // ========== WALLS ==========
+// ========== WALLS ==========
 function wall(w,h,d,x,y,z){
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(w,h,d),
-    new THREE.MeshStandardMaterial({ color: 0xfafafa })
+    santaWallMat
   );
   m.position.set(x,y,z);
   scene.add(m);
 }
+
 wall(40,4,0.5, 0,2, -20);
 wall(40,4,0.5, 0,2,  20);
 wall(0.5,4,40, -20,2, 0);
