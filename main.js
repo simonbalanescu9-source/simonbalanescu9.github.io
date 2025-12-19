@@ -735,6 +735,66 @@ function handleJump(){
     verticalVelocity = JUMP_SPEED;
   }
 }
+function throwMolotov(){
+  if (molotovs <= 0){
+    toast("No Molotovs! Buy one from the cashier.");
+    return;
+  }
+
+  molotovs -= 1;
+  updateUI();
+
+  const bottle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0xff5500,
+      emissive: 0xff2200,
+      emissiveIntensity: 0.7
+    })
+  );
+
+  // start at camera position (a bit in front)
+  const startPos = new THREE.Vector3();
+  startPos.copy(camera.position);
+  startPos.y -= 0.2; // slightly below eyes
+  bottle.position.copy(startPos);
+
+  scene.add(bottle);
+
+  // direction forward
+  const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation).normalize();
+  const speed = 12;
+  const velocity = dir.multiplyScalar(speed);
+  velocity.y += 3; // small arc
+
+  molotovsThrown.push({ mesh: bottle, velocity });
+}
+
+function explodeMolotov(position){
+  const flash = new THREE.Mesh(
+    new THREE.SphereGeometry(0.8, 16, 16),
+    new THREE.MeshStandardMaterial({
+      color: 0xffaa33,
+      emissive: 0xff6600,
+      emissiveIntensity: 1,
+      transparent: true,
+      opacity: 0.6
+    })
+  );
+  flash.position.copy(position);
+  scene.add(flash);
+
+  let opacity = 0.6;
+  const fade = setInterval(() => {
+    opacity -= 0.1;
+    flash.material.opacity = Math.max(0, opacity);
+    if (opacity <= 0){
+      clearInterval(fade);
+      scene.remove(flash);
+    }
+  }, 50);
+}
+
 
 // keyboard: E = interact, F = mug
 document.addEventListener("keydown", (e) => {
