@@ -9,7 +9,7 @@ const camera = new THREE.PerspectiveCamera(
   500
 );
 camera.position.set(0, 1.6, 8);
-scene.add(camera); // important so we can parent the gun to the camera
+scene.add(camera); // so we can parent the gun to the camera
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -137,7 +137,6 @@ document.addEventListener("pointerlockchange", () => {
 
 // Click on canvas: lock pointer or shoot
 renderer.domElement.addEventListener("click", (e) => {
-  // ignore clicks meant for UI (if somehow overlapping)
   if (
     shopOpen ||
     e.target.closest("#shopPanel") ||
@@ -568,7 +567,7 @@ let ammo  = 0;
 const list = { Apple: 2, Milk: 1, Cereal: 1 };
 const bought = { Apple: 0, Milk: 0, Cereal: 0 };
 
-// shop prices (AK = 30 here)
+// shop prices
 const MOLOTOV_COST = 15;
 const AK_COST      = 30;
 
@@ -595,7 +594,7 @@ function createGun(){
   barrel.position.set(0, 0, -0.8);
   group.add(barrel);
 
-  // stock (towards +Z, back into your shoulder)
+  // stock (towards +Z)
   const stock = new THREE.Mesh(
     new THREE.BoxGeometry(0.25, 0.25, 0.4),
     new THREE.MeshStandardMaterial({ color: 0x333333 })
@@ -616,9 +615,9 @@ function createGun(){
   muzzle.position.set(0, 0, -1.15);
   group.add(muzzle);
 
-  // position on screen: bottom-right, slight tilt
+  // position on screen: bottom-right-ish, slight tilt
   group.position.set(0.5, -0.35, -0.8);
-  group.rotation.set(-0.1, 0, 0);  // no yaw so it points straight where camera looks
+  group.rotation.set(-0.1, 0, 0);
 
   group.visible = false;
   camera.add(group);
@@ -626,9 +625,7 @@ function createGun(){
   gun = group;
   gunMuzzle = muzzle;
 }
-
 createGun();
-
 
 function updateGunVisibility(){
   if (!gun) return;
@@ -810,7 +807,6 @@ function openShop(){
   if (document.exitPointerLock) {
     document.exitPointerLock();
   }
-
   document.body.classList.add("show-cursor");
 }
 
@@ -820,6 +816,7 @@ function closeShop(){
   shopOpen = false;
 }
 
+// ========== SHOP ACTIONS ==========
 function buyMolotov(){
   const cost = MOLOTOV_COST;
   if (money < cost){
@@ -833,7 +830,7 @@ function buyMolotov(){
 }
 
 function buyAK(){
-  const cost = AK_COST;  // 30
+  const cost = AK_COST;
   if (hasAK){
     toast("You already have an AK-47.");
     return;
@@ -1020,8 +1017,16 @@ function shootAK(){
     .applyEuler(camera.rotation)
     .normalize();
 
+  // get origin at muzzle if available, else from camera
+  let origin;
+  if (gunMuzzle){
+    origin = new THREE.Vector3();
+    gunMuzzle.getWorldPosition(origin);
+  } else {
+    origin = camera.position.clone();
+  }
+
   // ----- INSTANT HIT (RAYCAST) -----
-  const origin = camera.position.clone();
   raycaster.set(origin, dir);
   const hits = raycaster.intersectObjects(npcs, true);
 
@@ -1042,31 +1047,6 @@ function shootAK(){
   }
 
   // ----- VISIBLE BULLET FROM MUZZLE -----
-  if (gunMuzzle){
-    const muzzlePos = new THREE.Vector3();
-    gunMuzzle.getWorldPosition(muzzlePos);
-
-    const bulletMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.05, 8, 8),
-      new THREE.MeshStandardMaterial({
-        color: 0xffff55,
-        emissive: 0xffee88,
-        emissiveIntensity: 0.7
-      })
-    );
-    bulletMesh.position.copy(muzzlePos);
-    scene.add(bulletMesh);
-
-    const speed = 40;
-    bullets.push({
-      mesh: bulletMesh,
-      velocity: dir.clone().multiplyScalar(speed),
-      life: 1.5
-    });
-  }
-}
-
-  // visible bullet from muzzle
   if (gunMuzzle){
     const muzzlePos = new THREE.Vector3();
     gunMuzzle.getWorldPosition(muzzlePos);
@@ -1212,7 +1192,7 @@ function animate(){
     verticalVelocity = 0;
   }
 
-  // make sure camera rotation always uses current yaw/pitch
+  // keep camera rotation in sync
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
   // NPC movement
@@ -1270,27 +1250,16 @@ function animate(){
       }
     }
   }
-  // Bullets (visual only, straight line)
+
+  // Bullets (visual only, straight line from muzzle)
   for (let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
     b.mesh.position.addScaledVector(b.velocity, dt);
     b.life -= dt;
 
-    // optional: despawn if too far from player
-    const distSq =
-      b.mesh.position.distanceToSquared(camera.position);
+    const distSq = b.mesh.position.distanceToSquared(camera.position);
 
     if (b.life <= 0 || distSq > 2000){
-      scene.remove(b.mesh);
-      bullets.splice(i, 1);
-    }
-  }
-  // bullets
-  for (let i = bullets.length - 1; i >= 0; i--){
-    const b = bullets[i];
-    b.mesh.position.addScaledVector(b.velocity, dt);
-    b.life -= dt;
-    if (b.life <= 0){
       scene.remove(b.mesh);
       bullets.splice(i, 1);
     }
