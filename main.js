@@ -9,13 +9,16 @@ const camera = new THREE.PerspectiveCamera(
   500
 );
 camera.position.set(0, 1.6, 8);
+scene.add(camera); // important so we can parent the gun to the camera
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 document.body.appendChild(renderer.domElement);
-// Start with no cursor (FPS) – pointer lock will hide it anyway
+
+// start in FPS mode: no OS cursor
 document.body.classList.remove("show-cursor");
+
 // Lights
 scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -119,12 +122,22 @@ const GROUND_Y = 1.6;
 const GRAVITY  = -20;
 const JUMP_SPEED = 7;
 
-// We declare this here so the click handler can see it
+// SHOP STATE
 let shopOpen = false;
 
-// Click: pointer lock first, then shooting AK
-document.addEventListener("click", (e) => {
-  // if click is on UI (shop, HUD, touch controls, etc.), ignore for pointer lock
+// Pointer lock change -> toggle cursor class
+document.addEventListener("pointerlockchange", () => {
+  const locked = document.pointerLockElement === renderer.domElement;
+  if (locked && !shopOpen) {
+    document.body.classList.remove("show-cursor");
+  } else {
+    document.body.classList.add("show-cursor");
+  }
+});
+
+// Click on canvas: lock pointer or shoot
+renderer.domElement.addEventListener("click", (e) => {
+  // ignore clicks meant for UI (if somehow overlapping)
   if (
     shopOpen ||
     e.target.closest("#shopPanel") ||
@@ -134,17 +147,8 @@ document.addEventListener("click", (e) => {
   ) {
     return;
   }
-document.addEventListener("pointerlockchange", () => {
-  const locked = document.pointerLockElement === renderer.domElement;
-  if (locked) {
-    // FPS mode: hide OS cursor
-    document.body.classList.remove("show-cursor");
-  } else {
-    // Not locked (e.g. shop open): show OS cursor
-    document.body.classList.add("show-cursor");
-  }
-});
-  // avoid pointer lock / shooting on mobile (mobile uses buttons)
+
+  // avoid pointer lock / shooting on mobile
   if (/Mobi|Android/i.test(navigator.userAgent)) return;
 
   if (document.pointerLockElement !== renderer.domElement) {
@@ -152,7 +156,7 @@ document.addEventListener("pointerlockchange", () => {
     return;
   }
 
-  if (e.button === 0) { // left click
+  if (e.button === 0) {
     shootAK();
   }
 });
@@ -568,6 +572,63 @@ const bought = { Apple: 0, Milk: 0, Cereal: 0 };
 const MOLOTOV_COST = 15;
 const AK_COST      = 30;
 
+// ========== GUN (VIEWMODEL) ==========
+let gun = null;
+let gunMuzzle = null;
+
+function createGun(){
+  const group = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8, 0.2, 0.2),
+    new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.3 })
+  );
+  group.add(body);
+
+  const barrel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 0.12, 0.12),
+    new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 })
+  );
+  barrel.position.set(0.7, 0, 0);
+  group.add(barrel);
+
+  const stock = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.25, 0.25),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
+  );
+  stock.position.set(-0.5, -0.05, 0);
+  group.add(stock);
+
+  const grip = new THREE.Mesh(
+    new THREE.BoxGeometry(0.15, 0.3, 0.15),
+    new THREE.MeshStandardMaterial({ color: 0x111111 })
+  );
+  grip.position.set(0, -0.25, -0.02);
+  group.add(grip);
+
+  // muzzle reference point
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(1.05, 0, 0);
+  group.add(muzzle);
+
+  // position relative to camera (right–hand side, slightly down)
+  group.position.set(0.5, -0.35, -0.9);
+  group.rotation.set(-0.1, 0.2, 0);
+
+  group.visible = false;
+  camera.add(group);
+
+  gun = group;
+  gunMuzzle = muzzle;
+}
+
+createGun();
+
+function updateGunVisibility(){
+  if (!gun) return;
+  gun.visible = hasAK;
+}
+
 function updateUI(){
   moneyText.textContent = `Money: $${money}`;
   cartText.textContent  = `Cart: $${cartTotal}`;
@@ -583,6 +644,8 @@ function updateUI(){
     k => `${k} x${Math.max(0, list[k] - bought[k])}`
   );
   listText.textContent = `List: ${parts.join(", ")}`;
+
+  updateGunVisibility();
 }
 updateUI();
 
@@ -608,6 +671,7 @@ createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 // ========== NPC SHOPPERS & PROJECTILES ==========
 const npcs = [];
 const molotovsThrown = [];
+const bullets = []; // visible bullets
 
 function createNPC(x, z, shirtColor = 0x88aaff) {
   const npc = new THREE.Group();
@@ -741,7 +805,6 @@ function openShop(){
     document.exitPointerLock();
   }
 
-  // make sure OS cursor is visible over the shop
   document.body.classList.add("show-cursor");
 }
 
@@ -749,7 +812,6 @@ function closeShop(){
   if (!shopPanel) return;
   shopPanel.classList.remove("show");
   shopOpen = false;
-  // we DON'T re-lock here; user will click the world to lock again
 }
 
 function buyMolotov(){
@@ -802,19 +864,16 @@ if (btnCloseShop){
 
 // ========== INTERACT, MUG, JUMP, WEAPONS ==========
 function handleInteract(){
-  // if shop is open, close it
   if (shopOpen){
     closeShop();
     return;
   }
 
-  // 1) If near cashier, open shop
   if (nearCashier()){
     openShop();
     return;
   }
 
-  // 2) Checkout
   if (nearCheckout()){
     if (cartTotal === 0) {
       toast("Your cart is empty.");
@@ -830,7 +889,6 @@ function handleInteract(){
     return;
   }
 
-  // 3) Buy shelf item
   const hit = lookHit();
   if (!hit) return;
 
@@ -951,28 +1009,55 @@ function shootAK(){
   ammo -= 1;
   updateUI();
 
-  const origin = camera.position.clone();
+  // direction for ray + bullet
   const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize();
 
+  // raycast from camera (instant hit)
+  const origin = camera.position.clone();
   raycaster.set(origin, dir);
   const hits = raycaster.intersectObjects(npcs, true);
-  if (hits.length === 0) return;
 
-  let obj = hits[0].object;
-  let hitNpc = null;
-  while (obj && !hitNpc){
-    if (npcs.includes(obj)) {
-      hitNpc = obj;
-      break;
+  if (hits.length > 0) {
+    let obj = hits[0].object;
+    let hitNpc = null;
+    while (obj && !hitNpc){
+      if (npcs.includes(obj)) {
+        hitNpc = obj;
+        break;
+      }
+      obj = obj.parent;
     }
-    obj = obj.parent;
+
+    if (hitNpc){
+      scene.remove(hitNpc);
+      const idx = npcs.indexOf(hitNpc);
+      if (idx !== -1) npcs.splice(idx, 1);
+      toast("💥 NPC shot!");
+    }
   }
 
-  if (hitNpc){
-    scene.remove(hitNpc);
-    const idx = npcs.indexOf(hitNpc);
-    if (idx !== -1) npcs.splice(idx, 1);
-    toast("💥 NPC shot!");
+  // visible bullet from muzzle
+  if (gunMuzzle){
+    const muzzlePos = new THREE.Vector3();
+    gunMuzzle.getWorldPosition(muzzlePos);
+
+    const bulletMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 8),
+      new THREE.MeshStandardMaterial({
+        color: 0xffff55,
+        emissive: 0xffee88,
+        emissiveIntensity: 0.7
+      })
+    );
+    bulletMesh.position.copy(muzzlePos);
+    scene.add(bulletMesh);
+
+    const speed = 40;
+    bullets.push({
+      mesh: bulletMesh,
+      velocity: dir.clone().multiplyScalar(speed),
+      life: 1.5
+    });
   }
 }
 
@@ -1006,13 +1091,11 @@ function bindHoldButton(btn, keyName){
   btn.addEventListener("mouseleave", end);
 }
 
-// movement
 bindHoldButton(btnUp,    "w");
 bindHoldButton(btnDown,  "s");
 bindHoldButton(btnLeft,  "a");
 bindHoldButton(btnRight, "d");
 
-// tap actions
 if (btnInteract){
   const h = (e) => {
     e.preventDefault();
@@ -1099,7 +1182,7 @@ function animate(){
     verticalVelocity = 0;
   }
 
-  // turn with Q/E
+  // make sure camera rotation always uses current yaw/pitch
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
   // NPC movement
@@ -1155,6 +1238,17 @@ function animate(){
         exploded = true;
         break;
       }
+    }
+  }
+
+  // bullets
+  for (let i = bullets.length - 1; i >= 0; i--){
+    const b = bullets[i];
+    b.mesh.position.addScaledVector(b.velocity, dt);
+    b.life -= dt;
+    if (b.life <= 0){
+      scene.remove(b.mesh);
+      bullets.splice(i, 1);
     }
   }
 
