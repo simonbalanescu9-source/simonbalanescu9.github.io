@@ -16,7 +16,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 document.body.appendChild(renderer.domElement);
 
-// start in FPS mode: no OS cursor
+// start in FPS mode: no OS cursor (CSS may or may not use this class)
 document.body.classList.remove("show-cursor");
 
 // Lights
@@ -206,7 +206,7 @@ renderer.domElement.addEventListener("touchcancel", () => {
   touchLookActive = false;
 });
 
-// ========== GAME DATA ==========
+// ========== GAME DATA & COLLECTIONS ==========
 let money = 20;
 let cartTotal = 0;
 let molotovs = 0;
@@ -219,7 +219,6 @@ const bought = { Apple: 0, Milk: 0, Cereal: 0 };
 const MOLOTOV_COST = 15;
 const AK_COST      = 30;
 
-// ========== ARRAYS ==========
 const items = [];
 const npcs = [];
 const molotovsThrown = [];
@@ -228,7 +227,6 @@ const clouds = [];
 const pigs   = [];
 let pigSpawnTimer = 6 + Math.random() * 10;
 
-// vending machine ref
 let vendingMachine = null;
 
 // ========== FLOOR ==========
@@ -280,11 +278,9 @@ santaCanvas.width = 512;
 santaCanvas.height = 512;
 const sctx = santaCanvas.getContext("2d");
 
-// red background
 sctx.fillStyle = "#c41420";
 sctx.fillRect(0, 0, santaCanvas.width, santaCanvas.height);
 
-// diagonal white stripes
 sctx.strokeStyle = "#ffffff";
 sctx.lineWidth = 16;
 for (let i = -512; i < 512; i += 80) {
@@ -294,8 +290,7 @@ for (let i = -512; i < 512; i += 80) {
   sctx.stroke();
 }
 
-// simple repeating Santa faces
-function drawSanta(x, y) {
+function drawSantaFace(x, y) {
   sctx.fillStyle = "#ffe0c4";
   sctx.beginPath();
   sctx.arc(x, y, 36, 0, Math.PI * 2);
@@ -336,7 +331,7 @@ for (let i = 0; i < cols; i++) {
   for (let j = 0; j < rows; j++) {
     const x = (i + 0.5) * (santaCanvas.width / cols);
     const y = (j + 0.5) * (santaCanvas.height / rows);
-    drawSanta(x, y);
+    drawSantaFace(x, y);
   }
 }
 
@@ -456,131 +451,6 @@ shelf( 6, -6, 14);
 shelf(-6,  6, 14);
 shelf( 0,  6, 14);
 shelf( 6,  6, 14);
-
-// ========== CHRISTMAS TREES ==========
-function createChristmasTree(x, z) {
-  const tree = new THREE.Group();
-
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.25, 0.8, 12),
-    new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
-  );
-  trunk.position.y = 0.4;
-  tree.add(trunk);
-
-  const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f7a3a });
-  const l1 = new THREE.Mesh(new THREE.ConeGeometry(1.0, 1.2, 16), leavesMat);
-  l1.position.y = 1.2;
-  tree.add(l1);
-  const l2 = new THREE.Mesh(new THREE.ConeGeometry(0.8, 1.1, 16), leavesMat);
-  l2.position.y = 1.8;
-  tree.add(l2);
-  const l3 = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.0, 16), leavesMat);
-  l3.position.y = 2.4;
-  tree.add(l3);
-
-  const star = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.22),
-    new THREE.MeshStandardMaterial({
-      color: 0xffd700,
-      emissive: 0xffd700,
-      emissiveIntensity: 1
-    })
-  );
-  star.position.y = 3.1;
-  tree.add(star);
-
-  tree.position.set(x, 0.05, z);
-  scene.add(tree);
-}
-createChristmasTree(-17, -17);
-createChristmasTree(-17,  17);
-createChristmasTree( 17, -17);
-createChristmasTree( 17,  17);
-
-// ========== METAL PIPES POSTERS ==========
-function createPoster(x, y, z, rotY = 0) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#ffd700";
-  ctx.fillRect(0, 0, 512, 512);
-
-  ctx.strokeStyle = "#000";
-  ctx.lineWidth = 16;
-  ctx.strokeRect(8, 8, 496, 496);
-
-  ctx.fillStyle = "#000";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-
-  ctx.font = "900 84px Arial";
-  ctx.fillText("METAL", 256, 210);
-  ctx.fillText("PIPES", 256, 310);
-
-  ctx.font = "bold 28px Arial";
-  ctx.fillText("STRONG • LOUD • RELIABLE", 256, 395);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  const mat = new THREE.MeshStandardMaterial({
-    map: tex,
-    side: THREE.DoubleSide,
-    emissive: new THREE.Color(0x222222),
-    emissiveIntensity: 0.6
-  });
-
-  const poster = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
-  poster.position.set(x, y, z);
-  poster.rotation.y = rotY;
-  scene.add(poster);
-}
-
-createPoster( 0,   2.2, -18.8,  0);
-createPoster(-18.8,2.2,   0,    Math.PI/2);
-createPoster( 18.8,2.2,   4,   -Math.PI/2);
-createPoster( 10,  2.2, 18.8,  Math.PI);
-
-// FISHING POSTER
-function createFishingPoster(x, y, z, rotY = 0){
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#4fa9ff";
-  ctx.fillRect(0, 0, 512, 512);
-
-  ctx.strokeStyle = "#002347";
-  ctx.lineWidth = 16;
-  ctx.strokeRect(8, 8, 496, 496);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 60px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Fishing", 256, 170);
-  ctx.fillText("Vacation!", 256, 260);
-
-  ctx.font = "900 32px Arial";
-  ctx.fillText("bloxdapp.github.io", 256, 345);
-
-  const tex = new THREE.CanvasTexture(canvas);
-  const mat = new THREE.MeshStandardMaterial({
-    map: tex,
-    side: THREE.DoubleSide,
-    emissive: new THREE.Color(0x003366),
-    emissiveIntensity: 0.6
-  });
-
-  const poster = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), mat);
-  poster.position.set(x, y, z);
-  poster.rotation.y = rotY;
-  scene.add(poster);
-}
-
-createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
 // ========== GUN (VIEWMODEL) ==========
 let gun = null;
@@ -900,7 +770,7 @@ function createVendingMachine(x, z){
   vm.add(slot);
 
   vm.position.set(x, 0, z);
-  vm.rotation.y = Math.PI; // face center of store
+  vm.rotation.y = Math.PI; // face middle of store
 
   scene.add(vm);
   return vm;
@@ -1018,7 +888,7 @@ function closeShop(){
 function buyMolotov(){
   const cost = MOLOTOV_COST;
   if (money < cost){
-    toast(`Molotov costs $${cost}. Not enough money.`);
+    toast("Molotov costs $" + cost + ". Not enough money.");
     return;
   }
   money -= cost;
@@ -1034,14 +904,14 @@ function buyAK(){
     return;
   }
   if (money < cost){
-    toast(`AK-47 costs $${cost}. Not enough money.`);
+    toast("AK-47 costs $" + cost + ". Not enough money.");
     return;
   }
   money -= cost;
   hasAK = true;
   ammo  = 60;
   updateUI();
-  toast(`You bought an AK-47 for $${cost}.`);
+  toast("You bought an AK-47 for $" + cost + ".");
 }
 
 if (btnBuyMolotov){
@@ -1098,7 +968,10 @@ function handleInteract(){
   const hit = lookHit();
   if (!hit) return;
 
-  const { name, price, paid } = hit.userData;
+  const data = hit.userData || {};
+  const name  = data.name || "Item";
+  const price = data.price || 0;
+  const paid  = data.paid || false;
 
   if (!paid) {
     if (money < price) {
@@ -1109,12 +982,15 @@ function handleInteract(){
     cartTotal += price;
   }
 
-  if (bought[name] !== undefined) bought[name] += 1;
+  if (bought[name] !== undefined) {
+    bought[name] += 1;
+  }
 
   scene.remove(hit);
-  items.splice(items.indexOf(hit), 1);
+  const idx = items.indexOf(hit);
+  if (idx !== -1) items.splice(idx, 1);
 
-  toast(`+ ${name}${paid ? "" : " ($" + price + ")"}`);
+  toast("+ " + name + (paid ? "" : " ($" + price + ")"));
   updateUI();
 }
 
@@ -1136,7 +1012,7 @@ function handleMug(){
   npc.userData.wallet -= amount;
   money += amount;
 
-  toast(`You stole $${amount}. They have $${npc.userData.wallet} left.`);
+  toast("You stole $" + amount + ". They have $" + npc.userData.wallet + " left.");
   updateUI();
 }
 
@@ -1204,7 +1080,6 @@ function explodeMolotov(position){
   }, 50);
 }
 
-// AK shooting (PC click + FIRE button)
 function shootAK(){
   if (!hasAK){
     toast("You don't have a gun. Buy one at the egg.");
@@ -1429,7 +1304,7 @@ function animate(){
 
     if (exploded) continue;
 
-    for (let j = npcs.length - 1; j--){
+    for (let j = npcs.length - 1; j >= 0; j--){
       const npc = npcs[j];
       const dx = npc.position.x - proj.mesh.position.x;
       const dz = npc.position.z - proj.mesh.position.z;
@@ -1478,7 +1353,7 @@ function animate(){
     }
   }
 
-  // Pigs
+  // Pigs: spawn + move
   pigSpawnTimer -= dt;
   if (pigSpawnTimer <= 0){
     const fromLeft = Math.random() > 0.5;
