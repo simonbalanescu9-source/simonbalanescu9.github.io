@@ -21,7 +21,16 @@ body.show-cursor {
   padding:12px 12px 10px;
   box-shadow: 0 8px 30px rgba(0,0,0,.15);
 }
-
+#ui{
+  position:absolute;
+  top:14px;
+  left:14px;
+  width:280px;
+  background:rgba(255,255,255,.92);
+  border-radius:12px;
+  padding:12px 12px 10px;
+  box-shadow:0 8px 30px rgba(0,0,0,.15);
+}
 .title{ font-weight:800; font-size:18px; margin-bottom:6px; }
 #hint{ margin-top:8px; font-size:12px; opacity:.8; }
 
