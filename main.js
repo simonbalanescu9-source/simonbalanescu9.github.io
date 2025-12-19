@@ -41,6 +41,11 @@ const btnBuyAK      = document.getElementById("btnBuyAK");
 const btnCloseShop  = document.getElementById("btnCloseShop");
 
 function toast(msg){
+  // Safe: don’t crash if #toast is missing
+  if (!toastEl) {
+    console.log("[TOAST]", msg);
+    return;
+  }
   toastEl.textContent = msg;
   toastEl.classList.add("show");
   clearTimeout(toastEl._t);
@@ -68,7 +73,7 @@ function startMusic(){
   osc.start();
 
   musicOn = true;
-  musicBtn.textContent = "🔇 Music: On";
+  if (musicBtn) musicBtn.textContent = "🔇 Music: On";
 }
 
 function stopMusic(){
@@ -77,7 +82,7 @@ function stopMusic(){
   osc.disconnect();
   gain.disconnect();
   musicOn = false;
-  musicBtn.textContent = "🔊 Music: Off";
+  if (musicBtn) musicBtn.textContent = "🔊 Music: Off";
 }
 
 if (musicBtn) {
@@ -828,23 +833,18 @@ function createFlyingPig(fromLeft){
 }
 
 // ========== VENDING MACHINE 2.0 (MORE REALISTIC) ==========
-
-// Re-usable soda can mesh (used inside the machine and for the dropped drink)
 function createSodaCanMesh({ glow = false } = {}) {
-  // label texture
   const labelCanvas = document.createElement("canvas");
   labelCanvas.width = 256;
   labelCanvas.height = 128;
   const lctx = labelCanvas.getContext("2d");
 
-  // gradient background
   const grad = lctx.createLinearGradient(0, 0, 256, 128);
   grad.addColorStop(0, "#ff3b3b");
   grad.addColorStop(1, "#ff9a3b");
   lctx.fillStyle = grad;
   lctx.fillRect(0, 0, labelCanvas.width, labelCanvas.height);
 
-  // logo stripe
   lctx.fillStyle = "rgba(255,255,255,0.25)";
   lctx.beginPath();
   lctx.moveTo(-20, 20);
@@ -853,7 +853,6 @@ function createSodaCanMesh({ glow = false } = {}) {
   lctx.closePath();
   lctx.fill();
 
-  // text
   lctx.fillStyle = "#ffffff";
   lctx.font = "bold 42px Arial";
   lctx.textAlign = "center";
@@ -879,14 +878,12 @@ function createSodaCanMesh({ glow = false } = {}) {
 
   const can = new THREE.Group();
 
-  // cylinder side
   const side = new THREE.Mesh(
     new THREE.CylinderGeometry(0.22, 0.22, 0.7, 24, 1, true),
     bodyMat
   );
   can.add(side);
 
-  // top + bottom caps
   const topCap = new THREE.Mesh(
     new THREE.CylinderGeometry(0.22, 0.22, 0.02, 24),
     metalMat
@@ -901,7 +898,6 @@ function createSodaCanMesh({ glow = false } = {}) {
   bottomCap.position.y = -0.35;
   can.add(bottomCap);
 
-  // little tab on top
   const tab = new THREE.Mesh(
     new THREE.BoxGeometry(0.16, 0.01, 0.05),
     metalMat
@@ -915,7 +911,6 @@ function createSodaCanMesh({ glow = false } = {}) {
 function createVendingMachine(x, z){
   const vm = new THREE.Group();
 
-  // main body
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(1.3, 2.2, 0.9),
     new THREE.MeshStandardMaterial({
@@ -927,7 +922,6 @@ function createVendingMachine(x, z){
   body.position.y = 1.1;
   vm.add(body);
 
-  // front door frame
   const doorFrame = new THREE.Mesh(
     new THREE.BoxGeometry(0.9, 1.7, 0.05),
     new THREE.MeshStandardMaterial({
@@ -939,7 +933,6 @@ function createVendingMachine(x, z){
   doorFrame.position.set(-0.15, 1.2, 0.46);
   vm.add(doorFrame);
 
-  // glass
   const glass = new THREE.Mesh(
     new THREE.BoxGeometry(0.82, 1.6, 0.03),
     new THREE.MeshStandardMaterial({
@@ -953,7 +946,6 @@ function createVendingMachine(x, z){
   glass.position.set(-0.15, 1.2, 0.475);
   vm.add(glass);
 
-  // internal shelves + cans (purely visual)
   const shelves = 4;
   const cols = 3;
   for (let r = 0; r < shelves; r++) {
@@ -977,7 +969,6 @@ function createVendingMachine(x, z){
     }
   }
 
-  // payment panel background
   const panel = new THREE.Mesh(
     new THREE.BoxGeometry(0.32, 1.2, 0.06),
     new THREE.MeshStandardMaterial({
@@ -989,7 +980,6 @@ function createVendingMachine(x, z){
   panel.position.set(0.45, 1.25, 0.45);
   vm.add(panel);
 
-  // small LCD screen
   const screenCanvas = document.createElement("canvas");
   screenCanvas.width = 256;
   screenCanvas.height = 128;
@@ -1014,7 +1004,6 @@ function createVendingMachine(x, z){
   screen.position.set(0.45, 1.55, 0.48);
   vm.add(screen);
 
-  // keypad
   const keyMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
   const keyGeo = new THREE.BoxGeometry(0.06, 0.04, 0.02);
   const startY = 1.30;
@@ -1033,7 +1022,6 @@ function createVendingMachine(x, z){
     }
   }
 
-  // coin slot
   const coinSlot = new THREE.Mesh(
     new THREE.BoxGeometry(0.14, 0.03, 0.02),
     new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.3 })
@@ -1041,7 +1029,6 @@ function createVendingMachine(x, z){
   coinSlot.position.set(0.45, 0.98, 0.48);
   vm.add(coinSlot);
 
-  // item pickup compartment
   const pickup = new THREE.Mesh(
     new THREE.BoxGeometry(0.7, 0.2, 0.08),
     new THREE.MeshStandardMaterial({
@@ -1053,7 +1040,6 @@ function createVendingMachine(x, z){
   pickup.position.set(-0.15, 0.5, 0.47);
   vm.add(pickup);
 
-  // silly neon title on top
   const topCanvas = document.createElement("canvas");
   topCanvas.width = 512;
   topCanvas.height = 128;
@@ -1078,13 +1064,12 @@ function createVendingMachine(x, z){
   topSign.position.set(0, 2.3, 0.42);
   vm.add(topSign);
 
-  // subtle glow light near the machine
   const glowLight = new THREE.PointLight(0x55ccff, 0.3, 6);
   glowLight.position.set(x, 2.0, z + 0.4);
   scene.add(glowLight);
 
   vm.position.set(x, 0, z);
-  vm.rotation.y = Math.PI; // face middle of store
+  vm.rotation.y = Math.PI;
 
   scene.add(vm);
   return vm;
@@ -1092,7 +1077,6 @@ function createVendingMachine(x, z){
 
 vendingMachine = createVendingMachine(14, 5);
 
-// drink from vending machine (already paid)
 function spawnVendingDrink(x, y, z){
   const drink = createSodaCanMesh({ glow: true });
   drink.position.set(x, y, z);
@@ -1172,6 +1156,7 @@ function nearCashier(maxDistance = 3){
   const dz = camera.position.z - cashier.position.z;
   return (dx*dx + dz*dz) < (maxDistance * maxDistance);
 }
+
 function getNearbySoda(maxDistance = 1.8) {
   let nearest = null;
   let bestDistSq = maxDistance * maxDistance;
@@ -1270,7 +1255,6 @@ function createGorilla(position){
   const midFur   = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.8 });
   const faceMat  = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 });
 
-  // torso
   const torso = new THREE.Mesh(
     new THREE.BoxGeometry(0.9, 1.1, 0.6),
     darkFur
@@ -1278,7 +1262,6 @@ function createGorilla(position){
   torso.position.y = 1.1;
   g.add(torso);
 
-  // head
   const head = new THREE.Mesh(
     new THREE.BoxGeometry(0.55, 0.5, 0.5),
     faceMat
@@ -1286,7 +1269,6 @@ function createGorilla(position){
   head.position.set(0, 1.75, 0.05);
   g.add(head);
 
-  // snout
   const snout = new THREE.Mesh(
     new THREE.BoxGeometry(0.4, 0.25, 0.4),
     faceMat
@@ -1294,7 +1276,6 @@ function createGorilla(position){
   snout.position.set(0, 1.6, 0.27);
   g.add(snout);
 
-  // eyes
   const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const pupilMat    = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
@@ -1312,7 +1293,6 @@ function createGorilla(position){
   rightPupil.position.set(0.13, 1.69, 0.36);
   g.add(leftPupil, rightPupil);
 
-  // arms
   const armGeo = new THREE.BoxGeometry(0.28, 0.9, 0.28);
   const leftArm  = new THREE.Mesh(armGeo, midFur);
   const rightArm = new THREE.Mesh(armGeo, midFur);
@@ -1320,7 +1300,6 @@ function createGorilla(position){
   rightArm.position.set(0.6, 1.1, 0);
   g.add(leftArm, rightArm);
 
-  // legs
   const legGeo = new THREE.BoxGeometry(0.32, 0.75, 0.32);
   const leftLeg  = new THREE.Mesh(legGeo, darkFur);
   const rightLeg = new THREE.Mesh(legGeo, darkFur);
@@ -1328,7 +1307,6 @@ function createGorilla(position){
   rightLeg.position.set(0.25, 0.38, 0);
   g.add(leftLeg, rightLeg);
 
-  // slight hunch forward
   g.rotation.x = -0.08;
 
   g.position.copy(position);
@@ -1344,16 +1322,13 @@ function createGorillaSpeech(position){
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
 
-  // bubble background
   ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
   ctx.fillRect(0, 0, 512, 256);
 
-  // border
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 8;
   ctx.strokeRect(12, 12, 488, 232);
 
-  // text
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 54px Arial";
   ctx.textAlign = "center";
@@ -1372,8 +1347,6 @@ function createGorillaSpeech(position){
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.5), mat);
   plane.position.copy(position).add(new THREE.Vector3(0, 2.2, 0));
-
-  // roughly face the player
   plane.lookAt(camera.position);
 
   scene.add(plane);
@@ -1381,13 +1354,12 @@ function createGorillaSpeech(position){
 }
 
 function showGorillaWarning(drinkWorldPos){
-  if (gorillaActive) return; // don't stack gorillas
+  if (gorillaActive) return;
 
   gorillaActive = true;
 
-  // put gorilla near the drink, slightly toward the player
   const basePos = drinkWorldPos.clone();
-  basePos.y = 0; // on floor
+  basePos.y = 0;
 
   const toCam = new THREE.Vector3().subVectors(camera.position, basePos);
   toCam.y = 0;
@@ -1399,7 +1371,6 @@ function showGorillaWarning(drinkWorldPos){
   gorilla = createGorilla(basePos);
   gorillaSpeech = createGorillaSpeech(basePos);
 
-  // remove after exactly 5 seconds
   if (gorillaTimer) clearTimeout(gorillaTimer);
   gorillaTimer = setTimeout(() => {
     if (gorilla) {
@@ -1421,7 +1392,7 @@ function handleInteract(){
     return;
   }
 
-  // 1) FIRST: if there is a soda near you, pick that up
+  // 1) FIRST: grab Soda near you (triggers gorilla)
   const nearbySoda = getNearbySoda(1.8);
   if (nearbySoda){
     const data = nearbySoda.userData || {};
@@ -1431,7 +1402,7 @@ function handleInteract(){
 
     const worldPos = new THREE.Vector3();
     nearbySoda.getWorldPosition(worldPos);
-    showGorillaWarning(worldPos);   // 🔮 spawn funny gorilla + speech
+    showGorillaWarning(worldPos);
 
     if (!paid) {
       if (money < price) {
@@ -1455,7 +1426,7 @@ function handleInteract(){
     return;
   }
 
-  // 2) SECOND: interact with whatever you are looking at (other items)
+  // 2) SECOND: interact with whatever you're looking at
   const hit = lookHit();
   if (hit){
     const data = hit.userData || {};
@@ -1485,35 +1456,7 @@ function handleInteract(){
     return;
   }
 
-  // 3) LAST: other zones (cashier, checkout, vending machine)
-  if (nearCashier()){
-    openShop();
-    return;
-  }
-
-  if (nearCheckout()){
-    if (cartTotal === 0) {
-      toast("Your cart is empty.");
-      return;
-    }
-    if (Object.keys(list).some(k => bought[k] < list[k])) {
-      toast("You still missed items on your list!");
-      return;
-    }
-    toast("🎉 Paid! You win!");
-    cartTotal = 0;
-    updateUI();
-    return;
-  }
-
-  if (nearVending()){
-    useVendingMachine();
-    return;
-  }
-}
-
-
-  // If we didn't hit an item, check other interactions
+  // 3) LAST: zones
   if (nearCashier()){
     openShop();
     return;
@@ -1816,7 +1759,6 @@ function animate(){
 
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
-  // NPC movement
   npcs.forEach(npc => {
     npc.position.z += npc.userData.dir * npc.userData.speed * dt;
 
@@ -1833,7 +1775,6 @@ function animate(){
     }
   });
 
-  // Molotovs
   for (let i = molotovsThrown.length - 1; i >= 0; i--){
     const proj = molotovsThrown[i];
     proj.velocity.y += GRAVITY * dt * 0.5;
@@ -1872,7 +1813,6 @@ function animate(){
     }
   }
 
-  // Bullets
   for (let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
     b.mesh.position.addScaledVector(b.velocity, dt);
@@ -1886,7 +1826,6 @@ function animate(){
     }
   }
 
-  // Clouds
   for (let i = 0; i < clouds.length; i++){
     const c = clouds[i];
     const data = c.userData;
@@ -1899,7 +1838,6 @@ function animate(){
     }
   }
 
-  // Pigs: spawn + move
   pigSpawnTimer -= dt;
   if (pigSpawnTimer <= 0){
     const fromLeft = Math.random() > 0.5;
@@ -1926,7 +1864,6 @@ function animate(){
 
 animate();
 
-// Resize
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
