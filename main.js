@@ -539,6 +539,12 @@ function handleMug(){
   toast(`You stole $${amount}. They have $${npc.userData.wallet} left.`);
   updateUI();
 }
+function handleJump(){
+  // only jump if basically on the ground
+  if (camera.position.y <= GROUND_Y + 0.01 && verticalVelocity === 0) {
+    verticalVelocity = JUMP_SPEED;
+  }
+}
 
 // keyboard: E = interact, F = mug
 document.addEventListener("keydown", (e) => {
