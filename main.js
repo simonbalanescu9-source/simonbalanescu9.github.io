@@ -1270,7 +1270,21 @@ function animate(){
       }
     }
   }
+  // Bullets (visual only, straight line)
+  for (let i = bullets.length - 1; i >= 0; i--){
+    const b = bullets[i];
+    b.mesh.position.addScaledVector(b.velocity, dt);
+    b.life -= dt;
 
+    // optional: despawn if too far from player
+    const distSq =
+      b.mesh.position.distanceToSquared(camera.position);
+
+    if (b.life <= 0 || distSq > 2000){
+      scene.remove(b.mesh);
+      bullets.splice(i, 1);
+    }
+  }
   // bullets
   for (let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
