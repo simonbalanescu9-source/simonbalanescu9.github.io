@@ -28,10 +28,10 @@ const listText    = document.getElementById("list");
 const toastEl     = document.getElementById("toast");
 const musicBtn    = document.getElementById("musicBtn");
 const molotovText = document.getElementById("molotovs");
-const weaponText  = document.getElementById("weapon");      // NEW
+const weaponText  = document.getElementById("weapon");
 
 // shop UI
-const shopPanel    = document.getElementById("shopPanel");  // NEW
+const shopPanel     = document.getElementById("shopPanel");
 const btnBuyMolotov = document.getElementById("btnBuyMolotov");
 const btnBuyAK      = document.getElementById("btnBuyAK");
 const btnCloseShop  = document.getElementById("btnCloseShop");
@@ -85,13 +85,11 @@ musicBtn.addEventListener("click", (e) => {
   }
 });
 
-// ========== INPUT (KEYBOARD) ==========
+// ========== INPUT (KEYBOARD / MOUSE) ==========
 const keys = {};
 
 document.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
-
-  // track movement / turn keys
   keys[key] = true;
 
   if (key === "e") {
@@ -101,7 +99,6 @@ document.addEventListener("keydown", (e) => {
   } else if (e.code === "Space") {
     handleJump();
   } else if (key === "r") {
-    // R to throw Molotov
     throwMolotov();
   }
 });
@@ -117,15 +114,22 @@ let pitch = 0;
 
 // Jump / gravity
 let verticalVelocity = 0;
-const GROUND_Y = 1.6;    // standing eye height
-const GRAVITY  = -20;    // units per second^2
-const JUMP_SPEED = 7;    // how strong the jump is
+const GROUND_Y = 1.6;
+const GRAVITY  = -20;
+const JUMP_SPEED = 7;
 
-document.addEventListener("click", () => {
-  // avoid pointer lock on mobile
+// Click: pointer lock first, then shooting AK
+document.addEventListener("click", (e) => {
+  // avoid pointer lock / shooting on mobile (mobile uses buttons)
   if (/Mobi|Android/i.test(navigator.userAgent)) return;
+
   if (document.pointerLockElement !== renderer.domElement) {
     renderer.domElement.requestPointerLock();
+    return;
+  }
+
+  if (e.button === 0) { // left click
+    shootAK();
   }
 });
 
@@ -138,14 +142,14 @@ document.addEventListener("mousemove", (e) => {
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 });
 
-// Touch drag look (for phones / tablets)
+// Touch drag look (phones / tablets)
 let touchLookActive = false;
 let lastTouchX = 0;
 let lastTouchY = 0;
 const lookSensitivity = 0.0022;
 
 renderer.domElement.addEventListener("touchstart", (e) => {
-  if (e.touches.length !== 1) return; // one finger to look
+  if (e.touches.length !== 1) return;
   touchLookActive = true;
   lastTouchX = e.touches[0].clientX;
   lastTouchY = e.touches[0].clientY;
@@ -160,8 +164,8 @@ renderer.domElement.addEventListener("touchmove", (e) => {
   lastTouchX = t.clientX;
   lastTouchY = t.clientY;
 
-  yaw   -= dx * lookSensitivity;   // left / right
-  pitch -= dy * lookSensitivity;   // up / down
+  yaw   -= dx * lookSensitivity;
+  pitch -= dy * lookSensitivity;
   pitch = Math.max(-1.2, Math.min(1.2, pitch));
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
@@ -240,13 +244,11 @@ for (let i = -512; i < 512; i += 80) {
 
 // simple repeating Santa faces
 function drawSanta(x, y) {
-  // face
   sctx.fillStyle = "#ffe0c4";
   sctx.beginPath();
   sctx.arc(x, y, 36, 0, Math.PI * 2);
   sctx.fill();
 
-  // hat
   sctx.fillStyle = "#b00012";
   sctx.beginPath();
   sctx.moveTo(x - 40, y - 10);
@@ -255,32 +257,27 @@ function drawSanta(x, y) {
   sctx.closePath();
   sctx.fill();
 
-  // hat brim
   sctx.fillStyle = "#ffffff";
   sctx.fillRect(x - 42, y - 16, 84, 12);
 
-  // beard
   sctx.beginPath();
   sctx.moveTo(x - 40, y + 10);
   sctx.quadraticCurveTo(x, y + 55, x + 40, y + 10);
   sctx.quadraticCurveTo(x, y + 75, x - 40, y + 10);
   sctx.fill();
 
-  // eyes
   sctx.fillStyle = "#000000";
   sctx.beginPath();
   sctx.arc(x - 12, y - 5, 4, 0, Math.PI * 2);
   sctx.arc(x + 12, y - 5, 4, 0, Math.PI * 2);
   sctx.fill();
 
-  // nose
   sctx.fillStyle = "#ffb199";
   sctx.beginPath();
   sctx.arc(x, y + 5, 5, 0, Math.PI * 2);
   sctx.fill();
 }
 
-// draw Santas in a grid
 const cols = 3;
 const rows = 3;
 for (let i = 0; i < cols; i++) {
@@ -294,7 +291,7 @@ for (let i = 0; i < cols; i++) {
 const santaTex = new THREE.CanvasTexture(santaCanvas);
 santaTex.wrapS = THREE.RepeatWrapping;
 santaTex.wrapT = THREE.RepeatWrapping;
-santaTex.repeat.set(2, 1); // tile horizontally
+santaTex.repeat.set(2, 1);
 
 const santaWallMat = new THREE.MeshStandardMaterial({
   map: santaTex,
@@ -537,8 +534,8 @@ createFishingPoster(-10, 2.2, 18.8, Math.PI);
 let money = 20;
 let cartTotal = 0;
 let molotovs = 0;
-let hasAK = false;   // NEW
-let ammo  = 0;       // NEW
+let hasAK = false;
+let ammo  = 0;
 
 const list = { Apple: 2, Milk: 1, Cereal: 1 };
 const bought = { Apple: 0, Milk: 0, Cereal: 0 };
@@ -554,7 +551,9 @@ function updateUI(){
       ? `Weapon: AK-47 (${ammo} ammo)`
       : "Weapon: None";
   }
-  const parts = Object.keys(list).map(k => `${k} x${Math.max(0, list[k]-bought[k])}`);
+  const parts = Object.keys(list).map(
+    k => `${k} x${Math.max(0, list[k] - bought[k])}`
+  );
   listText.textContent = `List: ${parts.join(", ")}`;
 }
 updateUI();
@@ -578,14 +577,14 @@ createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
 createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
 createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 
-// ========== NPC SHOPPERS & MOLOTOV STORAGE ==========
+// ========== NPC SHOPPERS & PROJECTILES ==========
 const npcs = [];
 const molotovsThrown = [];
 
 function createNPC(x, z, shirtColor = 0x88aaff) {
   const npc = new THREE.Group();
 
-  // LEGS (dark pants)
+  // legs
   const legMat = new THREE.MeshStandardMaterial({ color: 0x333366 });
   const legGeo = new THREE.BoxGeometry(0.18, 0.8, 0.18);
 
@@ -597,14 +596,14 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
 
   npc.add(leftLeg, rightLeg);
 
-  // TORSO (shirt)
+  // torso
   const bodyGeo = new THREE.BoxGeometry(0.6, 0.9, 0.3);
   const bodyMat = new THREE.MeshStandardMaterial({ color: shirtColor });
   const body = new THREE.Mesh(bodyGeo, bodyMat);
   body.position.set(0, 1.25, 0);
   npc.add(body);
 
-  // ARMS
+  // arms
   const armGeo = new THREE.BoxGeometry(0.16, 0.7, 0.16);
   const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
 
@@ -614,7 +613,7 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   rightArm.position.x = 0.4;
   npc.add(leftArm, rightArm);
 
-  // HEAD
+  // head
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.25, 16, 16),
     new THREE.MeshStandardMaterial({ color: 0xffe0bd })
@@ -622,7 +621,7 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   head.position.set(0, 2.0, 0);
   npc.add(head);
 
-  // FACE (eyes + simple mouth)
+  // face
   const eyeGeo = new THREE.SphereGeometry(0.03, 12, 12);
   const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
@@ -639,7 +638,7 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   mouth.position.set(0, 1.93, 0.24);
   npc.add(mouth);
 
-  // OPTIONAL: tiny "hair" cap
+  // hair cap
   const hair = new THREE.Mesh(
     new THREE.SphereGeometry(0.26, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
     new THREE.MeshStandardMaterial({ color: 0x332211 })
@@ -647,7 +646,6 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   hair.position.set(0, 2.05, 0);
   npc.add(hair);
 
-  // root position
   npc.position.set(x, 0, z);
 
   npc.userData = {
@@ -660,7 +658,6 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   npcs.push(npc);
   return npc;
 }
-
 
 createNPC(-10, -4);
 createNPC(4, -8, 0xaaffaa);
@@ -706,23 +703,84 @@ function nearCashier(maxDistance = 3){
   return (dx*dx + dz*dz) < (maxDistance * maxDistance);
 }
 
-// ========== INTERACT & MUG ==========
+// ========== SHOP LOGIC ==========
+let shopOpen = false;
+
+function openShop(){
+  if (!shopPanel) return;
+  shopPanel.classList.add("show");
+  shopOpen = true;
+}
+
+function closeShop(){
+  if (!shopPanel) return;
+  shopPanel.classList.remove("show");
+  shopOpen = false;
+}
+
+function buyMolotov(){
+  const cost = 15;
+  if (money < cost){
+    toast("Molotov costs $15. Not enough money.");
+    return;
+  }
+  money -= cost;
+  molotovs += 1;
+  updateUI();
+  toast("You bought 1 Molotov.");
+}
+
+function buyAK(){
+  const cost = 80;
+  if (hasAK){
+    toast("You already have an AK-47.");
+    return;
+  }
+  if (money < cost){
+    toast("AK-47 costs $80. Not enough money.");
+    return;
+  }
+  money -= cost;
+  hasAK = true;
+  ammo  = 60;
+  updateUI();
+  toast("You bought an AK-47.");
+}
+
+if (btnBuyMolotov){
+  btnBuyMolotov.addEventListener("click", (e)=>{
+    e.preventDefault();
+    buyMolotov();
+  });
+}
+if (btnBuyAK){
+  btnBuyAK.addEventListener("click", (e)=>{
+    e.preventDefault();
+    buyAK();
+  });
+}
+if (btnCloseShop){
+  btnCloseShop.addEventListener("click", (e)=>{
+    e.preventDefault();
+    closeShop();
+  });
+}
+
+// ========== INTERACT, MUG, JUMP, WEAPONS ==========
 function handleInteract(){
-  // 1) Buy Molotov from cashier if close
-  if (nearCashier()){
-    const cost = 15;
-    if (money < cost){
-      toast("Molotov costs $15. Not enough money.");
-      return;
-    }
-    money -= cost;
-    molotovs += 1;
-    updateUI();
-    toast("You bought 1 Molotov.");
+  // if shop is open, close it
+  if (shopOpen){
+    closeShop();
     return;
   }
 
-  // 2) Checkout if near the green zone
+  // 1) If near cashier, open shop
+  if (nearCashier()){
+    openShop();
+    return;
+  }
+
+  // 2) Checkout
   if (nearCheckout()){
     if (cartTotal === 0) {
       toast("Your cart is empty.");
@@ -738,7 +796,7 @@ function handleInteract(){
     return;
   }
 
-  // 3) Try to buy an item from shelves
+  // 3) Buy shelf item
   const hit = lookHit();
   if (!hit) return;
 
@@ -789,7 +847,7 @@ function handleJump(){
 
 function throwMolotov(){
   if (molotovs <= 0){
-    toast("No Molotovs! Buy one from the cashier.");
+    toast("No Molotovs! Buy one from the egg.");
     return;
   }
 
@@ -845,6 +903,45 @@ function explodeMolotov(position){
   }, 50);
 }
 
+// AK shooting (PC click + FIRE button)
+function shootAK(){
+  if (!hasAK){
+    toast("You don't have a gun. Buy one at the egg.");
+    return;
+  }
+  if (ammo <= 0){
+    toast("Out of ammo!");
+    return;
+  }
+
+  ammo -= 1;
+  updateUI();
+
+  const origin = camera.position.clone();
+  const dir = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation).normalize();
+
+  raycaster.set(origin, dir);
+  const hits = raycaster.intersectObjects(npcs, true);
+  if (hits.length === 0) return;
+
+  let obj = hits[0].object;
+  let hitNpc = null;
+  while (obj && !hitNpc){
+    if (npcs.includes(obj)) {
+      hitNpc = obj;
+      break;
+    }
+    obj = obj.parent;
+  }
+
+  if (hitNpc){
+    scene.remove(hitNpc);
+    const idx = npcs.indexOf(hitNpc);
+    if (idx !== -1) npcs.splice(idx, 1);
+    toast("💥 NPC shot!");
+  }
+}
+
 // ========== TOUCH CONTROLS ==========
 const btnUp       = document.getElementById("btnUp");
 const btnDown     = document.getElementById("btnDown");
@@ -853,7 +950,8 @@ const btnRight    = document.getElementById("btnRight");
 const btnInteract = document.getElementById("btnInteract");
 const btnMug      = document.getElementById("btnMug");
 const btnJump     = document.getElementById("btnJump");
-const btnThrow    = document.getElementById("btnThrow"); // NEW
+const btnThrow    = document.getElementById("btnThrow");
+const btnFire     = document.getElementById("btnFire");
 
 function bindHoldButton(btn, keyName){
   if (!btn) return;
@@ -907,6 +1005,7 @@ if (btnJump){
   btnJump.addEventListener("click", h3);
   btnJump.addEventListener("touchstart", h3);
 }
+
 if (btnThrow){
   const h4 = (e) => {
     e.preventDefault();
@@ -914,6 +1013,15 @@ if (btnThrow){
   };
   btnThrow.addEventListener("click", h4);
   btnThrow.addEventListener("touchstart", h4);
+}
+
+if (btnFire){
+  const h5 = (e) => {
+    e.preventDefault();
+    shootAK();
+  };
+  btnFire.addEventListener("click", h5);
+  btnFire.addEventListener("touchstart", h5);
 }
 
 // ========== MOVEMENT & LOOP ==========
@@ -946,10 +1054,9 @@ function animate(){
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
 
-  // Player movement
   move(dt);
 
-  // JUMP / GRAVITY for player
+  // gravity / jump
   verticalVelocity += GRAVITY * dt;
   camera.position.y += verticalVelocity * dt;
 
@@ -958,7 +1065,7 @@ function animate(){
     verticalVelocity = 0;
   }
 
-  // Turn with Q/E (desktop or touch buttons)
+  // turn with Q/E
   const turnSpeed = 1.6;
   if (keys["q"]) {
     yaw += turnSpeed * dt;
@@ -985,7 +1092,7 @@ function animate(){
     }
   });
 
-  // Molotovs movement + collision
+  // Molotovs
   for (let i = molotovsThrown.length - 1; i >= 0; i--){
     const proj = molotovsThrown[i];
     proj.velocity.y += GRAVITY * dt * 0.5;
@@ -1029,6 +1136,7 @@ function animate(){
 
 animate();
 
+// Resize
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
