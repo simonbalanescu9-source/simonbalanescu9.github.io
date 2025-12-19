@@ -789,6 +789,7 @@ const btnRight    = document.getElementById("btnRight");
 const btnInteract = document.getElementById("btnInteract");
 const btnMug      = document.getElementById("btnMug");
 const btnJump     = document.getElementById("btnJump");
+const btnThrow    = document.getElementById("btnThrow"); // NEW
 
 function bindHoldButton(btn, keyName){
   if (!btn) return;
