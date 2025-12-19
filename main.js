@@ -557,119 +557,6 @@ function createFishingPoster(x, y, z, rotY = 0){
 
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
-// ========== SKY CLOUDS ==========
-function createCloud(x, z){
-  const cloud = new THREE.Group();
-
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    roughness: 0.95,
-    metalness: 0.0
-  });
-
-  const a = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), mat);
-  const b = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 16), mat);
-  const c = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), mat);
-
-  b.position.set(1.1, 0.2,  0.1);
-  c.position.set(-1.0,0.1,-0.1);
-
-  cloud.add(a,b,c);
-
-  const y = 8 + Math.random()*2;
-  cloud.position.set(x, y, z);
-
-  cloud.userData = {
-    speed: 0.8 + Math.random()*0.7,
-    dir:   Math.random() > 0.5 ? 1 : -1
-  };
-
-  scene.add(cloud);
-  clouds.push(cloud);
-}
-
-// spawn initial clouds
-for (let i = 0; i < 7; i++){
-  const x = -18 + Math.random()*36;
-  const z = -12 + Math.random()*24;
-  createCloud(x, z);
-}
-
-// ========== FLYING PIGS ==========
-function createFlyingPig(fromLeft){
-  const pig = new THREE.Group();
-
-  const pink  = new THREE.MeshStandardMaterial({ color: 0xffa4c4, roughness: 0.7, metalness: 0.1 });
-  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
-  const black = new THREE.MeshStandardMaterial({ color: 0x000000 });
-
-  // body
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.8, 0.6),
-    pink
-  );
-  pig.add(body);
-
-  // head
-  const head = new THREE.Mesh(
-    new THREE.BoxGeometry(0.7, 0.6, 0.6),
-    pink
-  );
-  head.position.set(0.8, 0.1, 0);
-  pig.add(head);
-
-  // snout
-  const snout = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.18, 0.25, 12),
-    pink
-  );
-  snout.rotation.z = Math.PI / 2;
-  snout.position.set(1.25, 0.05, 0);
-  pig.add(snout);
-
-  // eyes
-  const eyeGeo = new THREE.SphereGeometry(0.06, 12, 12);
-  const leftEye = new THREE.Mesh(eyeGeo, black);
-  const rightEye = new THREE.Mesh(eyeGeo, black);
-  leftEye.position.set(0.95, 0.23,  0.15);
-  rightEye.position.set(0.95, 0.23, -0.15);
-  pig.add(leftEye, rightEye);
-
-  // ears
-  const earGeo = new THREE.BoxGeometry(0.2, 0.35, 0.1);
-  const leftEar = new THREE.Mesh(earGeo, pink);
-  const rightEar = new THREE.Mesh(earGeo, pink);
-  leftEar.position.set(0.7, 0.5,  0.18);
-  rightEar.position.set(0.7, 0.5, -0.18);
-  pig.add(leftEar, rightEar);
-
-  // wings
-  const wingGeo = new THREE.BoxGeometry(0.1, 0.4, 0.8);
-  const leftWing = new THREE.Mesh(wingGeo, white);
-  const rightWing = new THREE.Mesh(wingGeo, white);
-  leftWing.position.set(0, 0.3,  0.5);
-  rightWing.position.set(0, 0.3, -0.5);
-  pig.add(leftWing, rightWing);
-
-  const dir    = fromLeft ? 1 : -1;
-  const startX = fromLeft ? -24 : 24;
-  const startZ = -4 + Math.random()*8;
-  const baseY  = 7 + Math.random()*2;
-
-  pig.position.set(startX, baseY, startZ);
-  pig.userData = {
-    dir,
-    speed: 6 + Math.random()*2,
-    baseY,
-    phase: Math.random()*Math.PI*2
-  };
-
-  pig.rotation.y = fromLeft ? 0 : Math.PI;
-
-  scene.add(pig);
-  pigs.push(pig);
-}
-
 // ========== GAME DATA ==========
 let money = 20;
 let cartTotal = 0;
@@ -784,7 +671,7 @@ createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
 createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
 createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 
-// ========== NPC SHOPPERS & PROJECTILES ==========
+// ========== NPCs, PROJECTILES & SKY ==========
 const npcs = [];
 const molotovsThrown = [];
 const bullets = []; // visible bullets
@@ -875,6 +762,7 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
 createNPC(-10, -4);
 createNPC(4, -8, 0xaaffaa);
 createNPC(10, 5, 0xffaaaa);
+
 // ========== SKY CLOUDS ==========
 function createCloud(x, z){
   const cloud = new THREE.Group();
@@ -987,6 +875,7 @@ function createFlyingPig(fromLeft){
   scene.add(pig);
   pigs.push(pig);
 }
+
 // ========== RAYCAST / HELPERS ==========
 const raycaster = new THREE.Raycaster();
 const centerMouse = new THREE.Vector2(0,0);
@@ -1480,7 +1369,7 @@ function animate(){
     }
   }
 
-   // Bullets (visual only, straight line from muzzle)
+  // Bullets (visual only, straight line from muzzle)
   for (let i = bullets.length - 1; i >= 0; i--){
     const b = bullets[i];
     b.mesh.position.addScaledVector(b.velocity, dt);
@@ -1522,46 +1411,6 @@ function animate(){
 
     pig.position.x += data.dir * data.speed * dt;
 
-    data.phase += dt * 2.0;
-    pig.position.y = data.baseY + Math.sin(data.phase) * 0.3;
-
-    if (Math.abs(pig.position.x) > 32){
-      scene.remove(pig);
-      pigs.splice(i, 1);
-    }
-  }
-
-  renderer.render(scene, camera);
-}
-
-
-  // Clouds drift
-  for (let i = 0; i < clouds.length; i++){
-    const c = clouds[i];
-    const data = c.userData;
-    c.position.x += data.dir * data.speed * dt;
-
-    if (c.position.x > 25){
-      c.position.x = -25;
-    } else if (c.position.x < -25){
-      c.position.x = 25;
-    }
-  }
-
-  // Spawn flying pigs occasionally
-  pigSpawnTimer -= dt;
-  if (pigSpawnTimer <= 0){
-    const fromLeft = Math.random() > 0.5;
-    createFlyingPig(fromLeft);
-    pigSpawnTimer = 6 + Math.random()*10;
-  }
-
-  // Move flying pigs
-  for (let i = pigs.length - 1; i >= 0; i--){
-    const pig = pigs[i];
-    const data = pig.userData;
-
-    pig.position.x += data.dir * data.speed * dt;
     data.phase += dt * 2.0;
     pig.position.y = data.baseY + Math.sin(data.phase) * 0.3;
 
