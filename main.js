@@ -737,7 +737,7 @@ function buyAK(){
     return;
   }
   if (money < cost){
-    toast("AK-47 costs $80. Not enough money.");
+    toast("AK-47 costs $30. Not enough money.");
     return;
   }
   money -= cost;
