@@ -568,23 +568,72 @@ createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 const npcs = [];
 const molotovsThrown = [];
 
-function createNPC(x, z, color = 0x88aaff) {
+function createNPC(x, z, shirtColor = 0x88aaff) {
   const npc = new THREE.Group();
 
-  const body = new THREE.Mesh(
-    new THREE.CapsuleGeometry(0.25, 0.7, 4, 8),
-    new THREE.MeshStandardMaterial({ color })
-  );
-  body.position.y = 0.7;
+  // LEGS (dark pants)
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x333366 });
+  const legGeo = new THREE.BoxGeometry(0.18, 0.8, 0.18);
+
+  const leftLeg = new THREE.Mesh(legGeo, legMat);
+  leftLeg.position.set(-0.12, 0.4, 0);
+
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.x = 0.12;
+
+  npc.add(leftLeg, rightLeg);
+
+  // TORSO (shirt)
+  const bodyGeo = new THREE.BoxGeometry(0.6, 0.9, 0.3);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: shirtColor });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.set(0, 1.25, 0);
   npc.add(body);
 
+  // ARMS
+  const armGeo = new THREE.BoxGeometry(0.16, 0.7, 0.16);
+  const armMat = new THREE.MeshStandardMaterial({ color: shirtColor });
+
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.set(-0.4, 1.25, 0);
+  const rightArm = leftArm.clone();
+  rightArm.position.x = 0.4;
+  npc.add(leftArm, rightArm);
+
+  // HEAD
   const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 16, 16),
+    new THREE.SphereGeometry(0.25, 16, 16),
     new THREE.MeshStandardMaterial({ color: 0xffe0bd })
   );
-  head.position.y = 1.3;
+  head.position.set(0, 2.0, 0);
   npc.add(head);
 
+  // FACE (eyes + simple mouth)
+  const eyeGeo = new THREE.SphereGeometry(0.03, 12, 12);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
+  const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+  const rightEye = new THREE.Mesh(eyeGeo, eyeMat.clone());
+  leftEye.position.set(-0.06, 2.04, 0.23);
+  rightEye.position.set(0.06, 2.04, 0.23);
+  npc.add(leftEye, rightEye);
+
+  const mouth = new THREE.Mesh(
+    new THREE.BoxGeometry(0.12, 0.04, 0.02),
+    new THREE.MeshStandardMaterial({ color: 0x552222 })
+  );
+  mouth.position.set(0, 1.93, 0.24);
+  npc.add(mouth);
+
+  // OPTIONAL: tiny "hair" cap
+  const hair = new THREE.Mesh(
+    new THREE.SphereGeometry(0.26, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0x332211 })
+  );
+  hair.position.set(0, 2.05, 0);
+  npc.add(hair);
+
+  // root position
   npc.position.set(x, 0, z);
 
   npc.userData = {
@@ -597,6 +646,7 @@ function createNPC(x, z, color = 0x88aaff) {
   npcs.push(npc);
   return npc;
 }
+
 
 createNPC(-10, -4);
 createNPC(4, -8, 0xaaffaa);
