@@ -206,6 +206,90 @@ const floor = new THREE.Mesh(
 );
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
+// ========== SANTA WALL PATTERN ==========
+const santaCanvas = document.createElement("canvas");
+santaCanvas.width = 512;
+santaCanvas.height = 512;
+const sctx = santaCanvas.getContext("2d");
+
+// red background
+sctx.fillStyle = "#c41420";
+sctx.fillRect(0, 0, santaCanvas.width, santaCanvas.height);
+
+// diagonal white stripes
+sctx.strokeStyle = "#ffffff";
+sctx.lineWidth = 16;
+for (let i = -512; i < 512; i += 80) {
+  sctx.beginPath();
+  sctx.moveTo(i, 0);
+  sctx.lineTo(i + 512, 512);
+  sctx.stroke();
+}
+
+// simple repeating Santa faces
+function drawSanta(x, y) {
+  // face
+  sctx.fillStyle = "#ffe0c4";
+  sctx.beginPath();
+  sctx.arc(x, y, 36, 0, Math.PI * 2);
+  sctx.fill();
+
+  // hat
+  sctx.fillStyle = "#b00012";
+  sctx.beginPath();
+  sctx.moveTo(x - 40, y - 10);
+  sctx.lineTo(x + 40, y - 10);
+  sctx.lineTo(x, y - 70);
+  sctx.closePath();
+  sctx.fill();
+
+  // hat brim
+  sctx.fillStyle = "#ffffff";
+  sctx.fillRect(x - 42, y - 16, 84, 12);
+
+  // beard
+  sctx.beginPath();
+  sctx.moveTo(x - 40, y + 10);
+  sctx.quadraticCurveTo(x, y + 55, x + 40, y + 10);
+  sctx.quadraticCurveTo(x, y + 75, x - 40, y + 10);
+  sctx.fill();
+
+  // eyes
+  sctx.fillStyle = "#000000";
+  sctx.beginPath();
+  sctx.arc(x - 12, y - 5, 4, 0, Math.PI * 2);
+  sctx.arc(x + 12, y - 5, 4, 0, Math.PI * 2);
+  sctx.fill();
+
+  // nose
+  sctx.fillStyle = "#ffb199";
+  sctx.beginPath();
+  sctx.arc(x, y + 5, 5, 0, Math.PI * 2);
+  sctx.fill();
+}
+
+// draw Santas in a grid
+const cols = 3;
+const rows = 3;
+for (let i = 0; i < cols; i++) {
+  for (let j = 0; j < rows; j++) {
+    const x = (i + 0.5) * (santaCanvas.width / cols);
+    const y = (j + 0.5) * (santaCanvas.height / rows);
+    drawSanta(x, y);
+  }
+}
+
+const santaTex = new THREE.CanvasTexture(santaCanvas);
+santaTex.wrapS = THREE.RepeatWrapping;
+santaTex.wrapT = THREE.RepeatWrapping;
+santaTex.repeat.set(2, 1); // tile horizontally
+
+const santaWallMat = new THREE.MeshStandardMaterial({
+  map: santaTex,
+  roughness: 0.95,
+  metalness: 0.0
+});
+
 
 // ========== WALLS ==========
 function wall(w,h,d,x,y,z){
