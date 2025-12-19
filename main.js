@@ -1421,20 +1421,47 @@ function handleInteract(){
     return;
   }
 
-  // First: try to interact with the item in the crosshair (this includes the Soda)
+  // 1) FIRST: if there is a soda near you, pick that up
+  const nearbySoda = getNearbySoda(1.8);
+  if (nearbySoda){
+    const data = nearbySoda.userData || {};
+    const name  = data.name || "Item";
+    const price = data.price || 0;
+    const paid  = data.paid || false;
+
+    const worldPos = new THREE.Vector3();
+    nearbySoda.getWorldPosition(worldPos);
+    showGorillaWarning(worldPos);   // 🔮 spawn funny gorilla + speech
+
+    if (!paid) {
+      if (money < price) {
+        toast("Not enough money!");
+        return;
+      }
+      money -= price;
+      cartTotal += price;
+    }
+
+    if (bought[name] !== undefined) {
+      bought[name] += 1;
+    }
+
+    scene.remove(nearbySoda);
+    const idx = items.indexOf(nearbySoda);
+    if (idx !== -1) items.splice(idx, 1);
+
+    toast("+ " + name + (paid ? "" : " ($" + price + ")"));
+    updateUI();
+    return;
+  }
+
+  // 2) SECOND: interact with whatever you are looking at (other items)
   const hit = lookHit();
   if (hit){
     const data = hit.userData || {};
     const name  = data.name || "Item";
     const price = data.price || 0;
     const paid  = data.paid || false;
-
-    // Special event: spooky gorilla when grabbing the soda
-    if (name === "Soda") {
-      const worldPos = new THREE.Vector3();
-      hit.getWorldPosition(worldPos);
-      showGorillaWarning(worldPos);
-    }
 
     if (!paid) {
       if (money < price) {
@@ -1457,6 +1484,34 @@ function handleInteract(){
     updateUI();
     return;
   }
+
+  // 3) LAST: other zones (cashier, checkout, vending machine)
+  if (nearCashier()){
+    openShop();
+    return;
+  }
+
+  if (nearCheckout()){
+    if (cartTotal === 0) {
+      toast("Your cart is empty.");
+      return;
+    }
+    if (Object.keys(list).some(k => bought[k] < list[k])) {
+      toast("You still missed items on your list!");
+      return;
+    }
+    toast("🎉 Paid! You win!");
+    cartTotal = 0;
+    updateUI();
+    return;
+  }
+
+  if (nearVending()){
+    useVendingMachine();
+    return;
+  }
+}
+
 
   // If we didn't hit an item, check other interactions
   if (nearCashier()){
