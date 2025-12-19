@@ -134,7 +134,16 @@ document.addEventListener("click", (e) => {
   ) {
     return;
   }
-
+document.addEventListener("pointerlockchange", () => {
+  const locked = document.pointerLockElement === renderer.domElement;
+  if (locked) {
+    // FPS mode: hide OS cursor
+    document.body.classList.remove("show-cursor");
+  } else {
+    // Not locked (e.g. shop open): show OS cursor
+    document.body.classList.add("show-cursor");
+  }
+});
   // avoid pointer lock / shooting on mobile (mobile uses buttons)
   if (/Mobi|Android/i.test(navigator.userAgent)) return;
 
