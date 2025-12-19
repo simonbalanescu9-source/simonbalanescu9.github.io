@@ -656,23 +656,45 @@ function nearCashier(maxDistance = 3){
 
 // ========== INTERACT & MUG ==========
 function handleInteract(){
-  // checkout
+  // 1) Buy Molotov from cashier if close
+  if (nearCashier()){
+    const cost = 15;
+    if (money < cost){
+      toast("Molotov costs $15. Not enough money.");
+      return;
+    }
+    money -= cost;
+    molotovs += 1;
+    updateUI();
+    toast("You bought 1 Molotov.");
+    return;
+  }
+
+  // 2) Checkout if near the green zone
   if (nearCheckout()){
-    if (cartTotal === 0) return toast("Your cart is empty.");
-    if (Object.keys(list).some(k => bought[k] < list[k]))
-      return toast("You still missed items on your list!");
+    if (cartTotal === 0) {
+      toast("Your cart is empty.");
+      return;
+    }
+    if (Object.keys(list).some(k => bought[k] < list[k])) {
+      toast("You still missed items on your list!");
+      return;
+    }
     toast("🎉 Paid! You win!");
     cartTotal = 0;
     updateUI();
     return;
   }
 
-  // try to buy item
+  // 3) Try to buy an item from shelves
   const hit = lookHit();
   if (!hit) return;
 
   const { name, price } = hit.userData;
-  if (money < price) return toast("Not enough money!");
+  if (money < price) {
+    toast("Not enough money!");
+    return;
+  }
 
   money -= price;
   cartTotal += price;
@@ -684,6 +706,7 @@ function handleInteract(){
   toast(`+ ${name} ($${price})`);
   updateUI();
 }
+
 
 function handleMug(){
   const npc = getNearestNPC(4);
