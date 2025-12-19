@@ -22,18 +22,12 @@ dirLight.position.set(6, 10, 4);
 scene.add(dirLight);
 
 // ========== UI ==========
-const moneyText = document.getElementById("money");
-const cartText  = document.getElementById("cart");
-const listText  = document.getElementById("list");
-const toastEl   = document.getElementById("toast");
-const musicBtn  = document.getElementById("musicBtn");
 const moneyText   = document.getElementById("money");
 const cartText    = document.getElementById("cart");
 const listText    = document.getElementById("list");
 const toastEl     = document.getElementById("toast");
 const musicBtn    = document.getElementById("musicBtn");
-const molotovText = document.getElementById("molotovs"); // NEW
-
+const molotovText = document.getElementById("molotovs");
 
 function toast(msg){
   toastEl.textContent = msg;
@@ -89,6 +83,10 @@ const keys = {};
 
 document.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
+
+  // track movement / turn keys
+  keys[key] = true;
+
   if (key === "e") {
     handleInteract();
   } else if (key === "f") {
@@ -100,7 +98,6 @@ document.addEventListener("keydown", (e) => {
     throwMolotov();
   }
 });
-
 
 document.addEventListener("keyup", (e) => {
   const k = e.key.toLowerCase();
@@ -213,6 +210,7 @@ const floor = new THREE.Mesh(
 );
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
+
 // ========== SANTA WALL PATTERN ==========
 const santaCanvas = document.createElement("canvas");
 santaCanvas.width = 512;
@@ -297,8 +295,6 @@ const santaWallMat = new THREE.MeshStandardMaterial({
   metalness: 0.0
 });
 
-
-// ========== WALLS ==========
 // ========== WALLS ==========
 function wall(w,h,d,x,y,z){
   const m = new THREE.Mesh(
@@ -329,7 +325,10 @@ const checkoutZone = new THREE.Mesh(
 checkoutZone.position.set(-14, 0.05, 10);
 scene.add(checkoutZone);
 
-// Egg cashierfunction createCashier(x, z) {
+// ========== CASHIER ==========
+let cashier = null;
+
+function createCashier(x, z) {
   const cashierGroup = new THREE.Group();
 
   const body = new THREE.Mesh(
@@ -339,7 +338,6 @@ scene.add(checkoutZone);
   body.scale.y = 1.4;
   cashierGroup.add(body);
 
-  // eyes, mouth etc – same as before, but added to cashierGroup
   const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
   const eyeBlackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
 
@@ -373,12 +371,10 @@ scene.add(checkoutZone);
   cashierGroup.position.set(x, 0.55, z);
   scene.add(cashierGroup);
 
-  return cashierGroup; // IMPORTANT
+  return cashierGroup;
 }
 
-// store a reference
 cashier = createCashier(-14, 13);
-
 
 // ========== SHELVES ==========
 function shelf(x, z, length = 14){
@@ -490,22 +486,20 @@ createPoster(-18.8,2.2,   0,    Math.PI/2);
 createPoster( 18.8,2.2,   4,   -Math.PI/2);
 createPoster( 10,  2.2, 18.8,  Math.PI);
 
+// FISHING POSTER
 function createFishingPoster(x, y, z, rotY = 0){
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 512;
   const ctx = canvas.getContext("2d");
 
-  // background
   ctx.fillStyle = "#4fa9ff";
   ctx.fillRect(0, 0, 512, 512);
 
-  // border
   ctx.strokeStyle = "#002347";
   ctx.lineWidth = 16;
   ctx.strokeRect(8, 8, 496, 496);
 
-  // Title
   ctx.fillStyle = "#ffffff";
   ctx.font = "bold 60px Arial";
   ctx.textAlign = "center";
@@ -513,12 +507,10 @@ function createFishingPoster(x, y, z, rotY = 0){
   ctx.fillText("Fishing", 256, 170);
   ctx.fillText("Vacation!", 256, 260);
 
-  // website
   ctx.font = "900 32px Arial";
   ctx.fillText("bloxdapp.github.io", 256, 345);
 
   const tex = new THREE.CanvasTexture(canvas);
-
   const mat = new THREE.MeshStandardMaterial({
     map: tex,
     side: THREE.DoubleSide,
@@ -537,11 +529,10 @@ createFishingPoster(-10, 2.2, 18.8, Math.PI);
 // ========== GAME DATA ==========
 let money = 20;
 let cartTotal = 0;
-let molotovs = 0; // NEW
+let molotovs = 0;
 
 const list = { Apple: 2, Milk: 1, Cereal: 1 };
 const bought = { Apple: 0, Milk: 0, Cereal: 0 };
-
 
 function updateUI(){
   moneyText.textContent = `Money: $${money}`;
@@ -552,7 +543,6 @@ function updateUI(){
   const parts = Object.keys(list).map(k => `${k} x${Math.max(0, list[k]-bought[k])}`);
   listText.textContent = `List: ${parts.join(", ")}`;
 }
-
 updateUI();
 
 // ========== ITEMS ==========
@@ -574,12 +564,9 @@ createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
 createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
 createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 
-// ========== NPC SHOPPERS ==========
+// ========== NPC SHOPPERS & MOLOTOV STORAGE ==========
 const npcs = [];
-const npcs = [];
-
-let cashier = null;                // NEW: reference to egg cashier
-const molotovsThrown = [];         // NEW: active thrown molotovs
+const molotovsThrown = [];
 
 function createNPC(x, z, color = 0x88aaff) {
   const npc = new THREE.Group();
@@ -603,7 +590,7 @@ function createNPC(x, z, color = 0x88aaff) {
   npc.userData = {
     dir: Math.random() > 0.5 ? 1 : -1,
     speed: 0.8 + Math.random() * 0.6,
-    wallet: 8 // starting money
+    wallet: 8
   };
 
   scene.add(npc);
@@ -647,6 +634,7 @@ function getNearestNPC(maxDistance = 3){
 
   return best;
 }
+
 function nearCashier(maxDistance = 3){
   if (!cashier) return false;
   const dx = camera.position.x - cashier.position.x;
@@ -707,7 +695,6 @@ function handleInteract(){
   updateUI();
 }
 
-
 function handleMug(){
   const npc = getNearestNPC(4);
   if (!npc) {
@@ -729,12 +716,13 @@ function handleMug(){
   toast(`You stole $${amount}. They have $${npc.userData.wallet} left.`);
   updateUI();
 }
+
 function handleJump(){
-  // only jump if basically on the ground
   if (camera.position.y <= GROUND_Y + 0.01 && verticalVelocity === 0) {
     verticalVelocity = JUMP_SPEED;
   }
 }
+
 function throwMolotov(){
   if (molotovs <= 0){
     toast("No Molotovs! Buy one from the cashier.");
@@ -753,19 +741,17 @@ function throwMolotov(){
     })
   );
 
-  // start at camera position (a bit in front)
   const startPos = new THREE.Vector3();
   startPos.copy(camera.position);
-  startPos.y -= 0.2; // slightly below eyes
+  startPos.y -= 0.2;
   bottle.position.copy(startPos);
 
   scene.add(bottle);
 
-  // direction forward
   const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation).normalize();
   const speed = 12;
   const velocity = dir.multiplyScalar(speed);
-  velocity.y += 3; // small arc
+  velocity.y += 3;
 
   molotovsThrown.push({ mesh: bottle, velocity });
 }
@@ -795,16 +781,7 @@ function explodeMolotov(position){
   }, 50);
 }
 
-
-// keyboard: E = interact, F = mug
-document.addEventListener("keydown", (e) => {
-  const key = e.key.toLowerCase();
-  if (key === "e") handleInteract();
-  else if (key === "f") handleMug();
-});
-
 // ========== TOUCH CONTROLS ==========
-// ---------- Touch Controls ----------
 const btnUp       = document.getElementById("btnUp");
 const btnDown     = document.getElementById("btnDown");
 const btnLeft     = document.getElementById("btnLeft");
@@ -879,9 +856,10 @@ function move(dt){
   if (keys["s"]) v.sub(forward);
   if (keys["d"]) v.add(right);
   if (keys["a"]) v.sub(right);
-  v.normalize().multiplyScalar(speed * dt);
-
-  camera.position.add(v);
+  if (v.lengthSq() > 0) {
+    v.normalize().multiplyScalar(speed * dt);
+    camera.position.add(v);
+  }
 
   camera.position.x = Math.max(-18.5, Math.min(18.5, camera.position.x));
   camera.position.z = Math.max(-18.5, Math.min(18.5, camera.position.z));
@@ -937,13 +915,11 @@ function animate(){
   // Molotovs movement + collision
   for (let i = molotovsThrown.length - 1; i >= 0; i--){
     const proj = molotovsThrown[i];
-    // gravity for molotov
     proj.velocity.y += GRAVITY * dt * 0.5;
     proj.mesh.position.addScaledVector(proj.velocity, dt);
 
     let exploded = false;
 
-    // hit floor
     if (proj.mesh.position.y <= 0.1){
       explodeMolotov(proj.mesh.position);
       scene.remove(proj.mesh);
@@ -953,7 +929,6 @@ function animate(){
 
     if (exploded) continue;
 
-    // hit NPC
     for (let j = npcs.length - 1; j >= 0; j--){
       const npc = npcs[j];
       const dx = npc.position.x - proj.mesh.position.x;
@@ -979,10 +954,8 @@ function animate(){
   renderer.render(scene, camera);
 }
 
-
 animate();
 
-// resize
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
