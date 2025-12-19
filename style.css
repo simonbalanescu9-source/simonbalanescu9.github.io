@@ -2,25 +2,10 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: system-ui, Arial, sans-serif;
-  cursor: none;          /* hide cursor in FPS mode */
+  /* ❌ no cursor: none here – let pointer lock handle it */
 }
 
-/* When we want the normal cursor (e.g. in the shop) */
-body.show-cursor {
-  cursor: default;
-}
-
-/* 👇 this was missing */
-#ui{
-  position:absolute;
-  top:14px;
-  left:14px;
-  width:280px;
-  background:rgba(255,255,255,.92);
-  border-radius:12px;
-  padding:12px 12px 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.15);
-}
+/* Top-left UI panel */
 #ui{
   position:absolute;
   top:14px;
@@ -31,32 +16,55 @@ body.show-cursor {
   padding:12px 12px 10px;
   box-shadow:0 8px 30px rgba(0,0,0,.15);
 }
-#ui * {
-  white-space: nowrap;
+
+/* Optional: keep everything compact inside the UI box */
+#ui *{
+  margin:2px 0;
 }
 
-#list {
-  display:block;
-  width:100%;
-  overflow:hidden;
-  text-overflow:ellipsis;
+.title{
+  font-weight:800;
+  font-size:18px;
+  margin-bottom:6px;
 }
-.title{ font-weight:800; font-size:18px; margin-bottom:6px; }
-#hint{ margin-top:8px; font-size:12px; opacity:.8; }
+
+#hint{
+  margin-top:8px;
+  font-size:12px;
+  opacity:.8;
+}
 
 #crosshair{
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  font-size:22px; font-weight:700; color:rgba(0,0,0,.65);
-  user-select:none; pointer-events:none;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-size:22px;
+  font-weight:700;
+  color:rgba(0,0,0,.65);
+  user-select:none;
+  pointer-events:none;
 }
 
 #toast{
-  position:absolute; left:50%; bottom:18px; transform:translateX(-50%);
-  background:rgba(0,0,0,.75); color:white; padding:10px 14px;
-  border-radius:999px; font-size:14px; opacity:0; transition:opacity .15s;
-  user-select:none; pointer-events:none;
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.75);
+  color:white;
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:14px;
+  opacity:0;
+  transition:opacity .15s;
+  user-select:none;
+  pointer-events:none;
 }
-#toast.show{ opacity:1; }
+#toast.show{
+  opacity:1;
+}
+
 #musicBtn{
   margin-top:10px;
   width:100%;
@@ -68,7 +76,11 @@ body.show-cursor {
   font-weight:700;
   cursor:pointer;
 }
-#musicBtn:hover{ opacity:.9; }
+#musicBtn:hover{
+  opacity:.9;
+}
+
+/* Touch controls (bottom-right) */
 #touchControls{
   position:absolute;
   bottom:16px;
@@ -107,6 +119,8 @@ body.show-cursor {
     opacity:0.3;
   }
 }
+
+/* Look controls (bottom-left) */
 #lookControls{
   position:absolute;
   bottom:16px;
@@ -120,6 +134,7 @@ body.show-cursor {
   width:60px;
   height:60px;
 }
+
 /* Egg shop panel */
 #shopPanel{
   position:absolute;
@@ -134,7 +149,7 @@ body.show-cursor {
   display:none;
   z-index:20;
   max-width:260px;
-  cursor: default;   /* 👈 add this line */
+  cursor: default; /* Show normal cursor over shop */
 }
 
 #shopPanel.show{
