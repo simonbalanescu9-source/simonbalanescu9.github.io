@@ -1322,18 +1322,23 @@ function createGorillaSpeech(position){
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+  // bubble background
+  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
   ctx.fillRect(0, 0, 512, 256);
 
+  // border
   ctx.strokeStyle = "#ffffff";
   ctx.lineWidth = 8;
-  ctx.strokeRect(12, 12, 488, 232);
+  ctx.strokeRect(16, 16, 480, 224);
 
+  // text
   ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 54px Arial";
+  ctx.font = "bold 50px Arial";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("THE END IS NEAR", 256, 128);
+  ctx.fillText("DON'T DRINK THAT!", 256, 110);
+  ctx.font = "bold 34px Arial";
+  ctx.fillText("THE END IS NEAR", 256, 170);
 
   const tex = new THREE.CanvasTexture(canvas);
 
@@ -1342,8 +1347,24 @@ function createGorillaSpeech(position){
     transparent: true,
     side: THREE.DoubleSide,
     emissive: new THREE.Color(0xffffff),
-    emissiveIntensity: 0.9
+    emissiveIntensity: 1.0
   });
+
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 1.7), mat);
+
+  // spawn above gorilla
+  plane.position.copy(position).add(new THREE.Vector3(0, 2.3, 0));
+
+  // initial orientation toward camera
+  plane.lookAt(
+    camera.position.x,
+    plane.position.y,
+    camera.position.z
+  );
+
+  scene.add(plane);
+  return plane;
+});
 
   const plane = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.5), mat);
   plane.position.copy(position).add(new THREE.Vector3(0, 2.2, 0));
