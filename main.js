@@ -464,12 +464,12 @@ function createFishingPoster(x, y, z, rotY = 0){
 
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
-// ========== FUNNY DOOR (on back wall, not in shelves/poster) ==========
+// ========== FUNNY DOOR (put it in a clear corner) ==========
 function createFunnyDoor(x, z, rotY = 0){
   const doorGroup = new THREE.Group();
   const doorMat = new THREE.MeshStandardMaterial({
     color: 0xff00ff,
-    emissive: new THREE.Color(0xff00ff),
+    emissive: 0xff00ff,
     emissiveIntensity: 1,
     metalness: 0,
     roughness: 1
@@ -485,22 +485,14 @@ function createFunnyDoor(x, z, rotY = 0){
   doorGroup.position.set(x, 0, z);
   doorGroup.rotation.y = rotY;
 
-  doorGroup.userData = { type:"funnyDoor", opened:false };
+  doorGroup.userData = { type:"funnyDoor" };
 
   scene.add(doorGroup);
   return doorGroup;
 }
 
-// Put the door on the back wall, to the right, clear of shelves/poster
-funnyDoor = createFunnyDoor(12, -19.7, 0);
-
-// Make the door always draw on top a bit (so you never "lose" it in overlap)
-funnyDoor.traverse(obj => {
-  if (obj.isMesh) {
-    obj.renderOrder = 9999;
-    obj.material.depthTest = false;
-  }
-});
+// Door in a totally empty corner (no shelves, no poster)
+funnyDoor = createFunnyDoor(15, -15, Math.PI / 4);
 
 // ========== CHECKOUT COUNTER & ZONE ==========
 const counter = new THREE.Mesh(
