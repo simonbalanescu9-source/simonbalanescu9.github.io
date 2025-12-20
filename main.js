@@ -465,8 +465,13 @@ createFishingPoster(-10, 2.2, 18.8, Math.PI);
 function createFunnyDoor(x, z, rotY = 0){
   const doorGroup = new THREE.Group();
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0x663300, metalness: 0.3, roughness: 0.8
-  });
+  color: 0xff00ff,
+  emissive: new THREE.Color(0xff00ff),
+  emissiveIntensity: 1,
+  metalness: 0,
+  roughness: 1
+});
+
 
   const panel = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 3.2, 0.2),
