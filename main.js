@@ -1429,7 +1429,50 @@ function showGorillaWarning(drinkWorldPos){
     gorillaActive = false;
   }, 5000);
 }
+function enterBackrooms(){
+  if(backRoomActive) return;
 
+  // remove store walls visually
+  floor.visible = false;
+
+  backRoomActive = true;
+
+  // reposition player
+  camera.position.set(0,1.6,0);
+
+  // make yellow fog
+  scene.background = new THREE.Color(0xd7d900);
+
+  // build tiny 8x8 backroom box
+  const mat = new THREE.MeshStandardMaterial({
+     color:0xf8f17a, roughness:0.9
+  });
+
+  const walls = [
+    new THREE.Mesh(new THREE.BoxGeometry(8,3.5,0.4), mat),
+    new THREE.Mesh(new THREE.BoxGeometry(8,3.5,0.4), mat),
+    new THREE.Mesh(new THREE.BoxGeometry(0.4,3.5,8), mat),
+    new THREE.Mesh(new THREE.BoxGeometry(0.4,3.5,8), mat)
+  ];
+
+  walls[0].position.set(0,1.75,-4);
+  walls[1].position.set(0,1.75,4);
+  walls[2].position.set(-4,1.75,0);
+  walls[3].position.set(4,1.75,0);
+
+  walls.forEach(w=>scene.add(w));
+
+  // add funny bear
+  funnyBear = new THREE.Mesh(
+    new THREE.BoxGeometry(1,2,1),
+    new THREE.MeshStandardMaterial({ color:0x995522 })
+  );
+  funnyBear.position.set(0,1.0,0);
+  funnyBear.userData = { type:"funnyBear" };
+  scene.add(funnyBear);
+
+  toast("You feel uneasy…")
+}
 // ========== INTERACT, MUG, JUMP, WEAPONS ==========
 function handleInteract(){
   if (shopOpen){
