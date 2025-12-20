@@ -1437,41 +1437,41 @@ function enterBackrooms(){
   if(backRoomActive) return;
   backRoomActive = true;
 
-  // move player far away from supermarket
+  // move player to backrooms and reset look
   camera.position.set(BACKROOM_CENTER.x, GROUND_Y, BACKROOM_CENTER.z);
+  yaw = 0;
+  pitch = 0;
+  camera.rotation.set(0, 0, 0, "YXZ");
 
   // spooky yellow background
   scene.background = new THREE.Color(0xd7d900);
 
-  // backroom floor
-  const backFloor = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 8),
+  // BACKROOM FLOOR
+  backRoomFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10),
     new THREE.MeshStandardMaterial({ color: 0xf0e98c, roughness: 0.9 })
   );
-  backFloor.rotation.x = -Math.PI / 2;
-  backFloor.position.set(BACKROOM_CENTER.x, 0, BACKROOM_CENTER.z);
-  scene.add(backFloor);
+  backRoomFloor.rotation.x = -Math.PI / 2;
+  backRoomFloor.position.set(BACKROOM_CENTER.x, 0, BACKROOM_CENTER.z);
+  scene.add(backRoomFloor);
 
-  // walls
-  const wallMat = new THREE.MeshStandardMaterial({
-    color:0xf8f17a, roughness:0.9
-  });
+  // BACKROOM WALLS (a small box around the player)
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8f17a, roughness: 0.9 });
 
-  const walls = [
-    new THREE.Mesh(new THREE.BoxGeometry(8,3.5,0.4), wallMat), // north
-    new THREE.Mesh(new THREE.BoxGeometry(8,3.5,0.4), wallMat), // south
-    new THREE.Mesh(new THREE.BoxGeometry(0.4,3.5,8), wallMat), // west
-    new THREE.Mesh(new THREE.BoxGeometry(0.4,3.5,8), wallMat)  // east
-  ];
+  const wN = new THREE.Mesh(new THREE.BoxGeometry(10, 3.5, 0.4), wallMat);
+  const wS = new THREE.Mesh(new THREE.BoxGeometry(10, 3.5, 0.4), wallMat);
+  const wW = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.5, 10), wallMat);
+  const wE = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.5, 10), wallMat);
 
-  walls[0].position.set(BACKROOM_CENTER.x, 1.75, BACKROOM_CENTER.z - 4);
-  walls[1].position.set(BACKROOM_CENTER.x, 1.75, BACKROOM_CENTER.z + 4);
-  walls[2].position.set(BACKROOM_CENTER.x - 4, 1.75, BACKROOM_CENTER.z);
-  walls[3].position.set(BACKROOM_CENTER.x + 4, 1.75, BACKROOM_CENTER.z);
+  wN.position.set(BACKROOM_CENTER.x, 1.75, BACKROOM_CENTER.z - 5);
+  wS.position.set(BACKROOM_CENTER.x, 1.75, BACKROOM_CENTER.z + 5);
+  wW.position.set(BACKROOM_CENTER.x - 5, 1.75, BACKROOM_CENTER.z);
+  wE.position.set(BACKROOM_CENTER.x + 5, 1.75, BACKROOM_CENTER.z);
 
-  walls.forEach(w=>scene.add(w));
+  backRoomWalls = [wN, wS, wW, wE];
+  backRoomWalls.forEach(w => scene.add(w));
 
-  // funny bear
+  // FUNNY BEAR IN THE MIDDLE
   funnyBear = new THREE.Mesh(
     new THREE.BoxGeometry(1,2,1),
     new THREE.MeshStandardMaterial({ color:0x995522 })
@@ -1482,6 +1482,7 @@ function enterBackrooms(){
 
   toast("You feel uneasy…");
 }
+
 
 // ========== INTERACT, MUG, JUMP, WEAPONS ==========
 function handleInteract(){
