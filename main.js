@@ -1479,7 +1479,26 @@ function handleInteract(){
     closeShop();
     return;
   }
+  // funny door check BEFORE soda pickup
+  if(!backRoomActive){
+    raycaster.setFromCamera(centerMouse, camera);
+    const doorHit = raycaster.intersectObject(funnyDoor, true);
+    if(doorHit.length){
+      toast("The door swings open...");
+      enterBackrooms();
+      return;
+    }
+  }
 
+  // funny bear check
+  if(backRoomActive && funnyBear){
+    raycaster.setFromCamera(centerMouse, camera);
+    const bearHit = raycaster.intersectObject(funnyBear, true);
+    if(bearHit.length){
+      toast("har har har har");
+      return;
+    }
+  }
   // 1) FIRST: grab Soda near you (triggers gorilla)
   const nearbySoda = getNearbySoda(1.8);
   if (nearbySoda){
