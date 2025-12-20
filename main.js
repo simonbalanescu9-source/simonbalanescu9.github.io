@@ -239,7 +239,9 @@ let gorilla = null;
 let gorillaSpeech = null;
 let gorillaTimer = null;
 let gorillaActive = false;
-
+let funnyDoor = null;
+let backRoomActive = false;
+let funnyBear = null;
 // ========== FLOOR ==========
 const floorSize = 40;
 const tileCanvas = document.createElement("canvas");
