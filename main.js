@@ -452,18 +452,19 @@ function createFishingPoster(x, y, z, rotY = 0) {
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
 // ===== FUNNY DOOR (WOODEN, AGAINST WALL) =====
-function createFunnyDoor(x, z, rotY = 0) {
+function createFunnyDoor(x, z, rotY = 0){
   const doorGroup = new THREE.Group();
 
-  // wooden material
+  // wooden material instead of purple neon
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0x8b5a2b, // warm brown
+    color: 0x8b5a2b,           // warm brown
     metalness: 0.1,
     roughness: 0.8,
     emissive: new THREE.Color(0x331a0d),
     emissiveIntensity: 0.15
   });
 
+  // main door panel
   const panel = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 3.2, 0.2),
     doorMat
@@ -471,7 +472,7 @@ function createFunnyDoor(x, z, rotY = 0) {
   panel.position.y = 1.6;
   doorGroup.add(panel);
 
-  // simple frame
+  // simple raised frame
   const frameMat = new THREE.MeshStandardMaterial({
     color: 0x5b3a1a,
     metalness: 0.05,
@@ -484,7 +485,7 @@ function createFunnyDoor(x, z, rotY = 0) {
   frame.position.set(0, 1.6, 0.09);
   doorGroup.add(frame);
 
-  // handle
+  // door handle
   const handle = new THREE.Mesh(
     new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12),
     new THREE.MeshStandardMaterial({
@@ -499,7 +500,8 @@ function createFunnyDoor(x, z, rotY = 0) {
 
   doorGroup.position.set(x, 0, z);
   doorGroup.rotation.y = rotY;
-  doorGroup.userData = { type: "funnyDoor" };
+
+  doorGroup.userData = { type:"funnyDoor" };
 
   scene.add(doorGroup);
   return doorGroup;
