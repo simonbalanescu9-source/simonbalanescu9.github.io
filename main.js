@@ -451,15 +451,17 @@ function createFishingPoster(x, y, z, rotY = 0) {
 
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
-// ===== FUNNY DOOR =====
+// ===== FUNNY DOOR (WOODEN, AGAINST WALL) =====
 function createFunnyDoor(x, z, rotY = 0) {
   const doorGroup = new THREE.Group();
+
+  // wooden material
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0xff00ff,
-    emissive: 0xff00ff,
-    emissiveIntensity: 1,
-    metalness: 0,
-    roughness: 1
+    color: 0x8b5a2b, // warm brown
+    metalness: 0.1,
+    roughness: 0.8,
+    emissive: new THREE.Color(0x331a0d),
+    emissiveIntensity: 0.15
   });
 
   const panel = new THREE.Mesh(
@@ -469,14 +471,42 @@ function createFunnyDoor(x, z, rotY = 0) {
   panel.position.y = 1.6;
   doorGroup.add(panel);
 
+  // simple frame
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x5b3a1a,
+    metalness: 0.05,
+    roughness: 0.9
+  });
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry(1.9, 3.3, 0.05),
+    frameMat
+  );
+  frame.position.set(0, 1.6, 0.09);
+  doorGroup.add(frame);
+
+  // handle
+  const handle = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      metalness: 0.9,
+      roughness: 0.3
+    })
+  );
+  handle.rotation.z = Math.PI / 2;
+  handle.position.set(0.6, 1.4, 0.11);
+  doorGroup.add(handle);
+
   doorGroup.position.set(x, 0, z);
   doorGroup.rotation.y = rotY;
-  doorGroup.userData = { type:"funnyDoor" };
+  doorGroup.userData = { type: "funnyDoor" };
+
   scene.add(doorGroup);
   return doorGroup;
 }
 
-funnyDoor = createFunnyDoor(15, -15, Math.PI / 4);
+// Against the back (north) wall at z ~ -20
+funnyDoor = createFunnyDoor(0, -19.6, 0);
 
 // ===== CHECKOUT COUNTER & ZONE =====
 const counter = new THREE.Mesh(
@@ -1409,7 +1439,159 @@ function showGorillaWarning(drinkWorldPos) {
   }, 5000);
 }
 
-// ===== BACKROOMS =====
+// ===== BACKROOMS – BEAR WITH TOP HAT =====
+function createFunnyBearModel(position) {
+  const bear = new THREE.Group();
+
+  const furMat = new THREE.MeshStandardMaterial({
+    color: 0x8b5a2b,
+    roughness: 0.8,
+    metalness: 0.1
+  });
+  const darkerFurMat = new THREE.MeshStandardMaterial({
+    color: 0x5b3a1a,
+    roughness: 0.85
+  });
+  const muzzleMat = new THREE.MeshStandardMaterial({
+    color: 0xd6b38a,
+    roughness: 0.8
+  });
+  const blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  const noseMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+
+  // Body
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(0.7, 24, 24),
+    furMat
+  );
+  body.scale.y = 1.2;
+  body.position.set(0, 1.1, 0);
+  bear.add(body);
+
+  // Belly patch
+  const belly = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 24, 24),
+    muzzleMat
+  );
+  belly.scale.set(0.8, 1.0, 0.4);
+  belly.position.set(0, 1.05, 0.35);
+  bear.add(belly);
+
+  // Head
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.45, 24, 24),
+    furMat
+  );
+  head.position.set(0, 1.85, 0.1);
+  bear.add(head);
+
+  // Muzzle
+  const muzzle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 24, 24),
+    muzzleMat
+  );
+  muzzle.scale.set(1.0, 0.7, 0.9);
+  muzzle.position.set(0, 1.7, 0.45);
+  bear.add(muzzle);
+
+  // Nose
+  const nose = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 16, 16),
+    noseMat
+  );
+  nose.position.set(0, 1.73, 0.6);
+  bear.add(nose);
+
+  // Eyes
+  const eyeGeo = new THREE.SphereGeometry(0.07, 16, 16);
+  const leftEye = new THREE.Mesh(eyeGeo, blackMat);
+  const rightEye = new THREE.Mesh(eyeGeo, blackMat);
+  leftEye.position.set(-0.15, 1.85, 0.5);
+  rightEye.position.set(0.15, 1.85, 0.5);
+  bear.add(leftEye, rightEye);
+
+  // Ears outer
+  const earOuterGeo = new THREE.SphereGeometry(0.18, 16, 16);
+  const leftEarOuter = new THREE.Mesh(earOuterGeo, furMat);
+  const rightEarOuter = new THREE.Mesh(earOuterGeo, furMat);
+  leftEarOuter.position.set(-0.28, 2.05, 0.1);
+  rightEarOuter.position.set(0.28, 2.05, 0.1);
+  bear.add(leftEarOuter, rightEarOuter);
+
+  // Ears inner
+  const earInnerGeo = new THREE.SphereGeometry(0.12, 16, 16);
+  const earInnerMat = new THREE.MeshStandardMaterial({ color: 0xf2c4c4 });
+  const leftEarInner = new THREE.Mesh(earInnerGeo, earInnerMat);
+  const rightEarInner = new THREE.Mesh(earInnerGeo, earInnerMat);
+  leftEarInner.position.set(-0.28, 2.06, 0.18);
+  rightEarInner.position.set(0.28, 2.06, 0.18);
+  bear.add(leftEarInner, rightEarInner);
+
+  // Arms
+  const armGeo = new THREE.CapsuleGeometry(0.15, 0.6, 8, 16);
+  const leftArm = new THREE.Mesh(armGeo, darkerFurMat);
+  const rightArm = new THREE.Mesh(armGeo, darkerFurMat);
+  leftArm.position.set(-0.5, 1.25, 0.0);
+  leftArm.rotation.z = 0.6;
+  rightArm.position.set(0.5, 1.25, 0.0);
+  rightArm.rotation.z = -0.6;
+  bear.add(leftArm, rightArm);
+
+  // Legs
+  const legGeo = new THREE.CapsuleGeometry(0.18, 0.5, 8, 16);
+  const leftLeg = new THREE.Mesh(legGeo, darkerFurMat);
+  const rightLeg = new THREE.Mesh(legGeo, darkerFurMat);
+  leftLeg.position.set(-0.22, 0.55, 0.1);
+  rightLeg.position.set(0.22, 0.55, 0.1);
+  bear.add(leftLeg, rightLeg);
+
+  // Feet
+  const pawGeo = new THREE.SphereGeometry(0.22, 16, 16);
+  const leftPaw = new THREE.Mesh(pawGeo, muzzleMat);
+  const rightPaw = new THREE.Mesh(pawGeo, muzzleMat);
+  leftPaw.position.set(-0.22, 0.35, 0.25);
+  rightPaw.position.set(0.22, 0.35, 0.25);
+  bear.add(leftPaw, rightPaw);
+
+  // Top hat 🎩
+  const hatMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    metalness: 0.2,
+    roughness: 0.5
+  });
+  const bandMat = new THREE.MeshStandardMaterial({
+    color: 0x6622aa,
+    metalness: 0.3,
+    roughness: 0.4
+  });
+
+  const brim = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.4, 0.06, 24),
+    hatMat
+  );
+  brim.position.set(0, 2.15, 0.1);
+  bear.add(brim);
+
+  const crown = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.25, 0.25, 0.5, 24),
+    hatMat
+  );
+  crown.position.set(0, 2.4, 0.1);
+  bear.add(crown);
+
+  const band = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.26, 0.08, 24),
+    bandMat
+  );
+  band.position.set(0, 2.28, 0.1);
+  bear.add(band);
+
+  bear.position.copy(position);
+  bear.userData = { type: "funnyBear" };
+  scene.add(bear);
+  return bear;
+}
+
 function enterBackrooms() {
   if (backRoomActive) return;
   backRoomActive = true;
@@ -1444,13 +1626,10 @@ function enterBackrooms() {
   backRoomWalls = [wN, wS, wW, wE];
   backRoomWalls.forEach(w => scene.add(w));
 
-  funnyBear = new THREE.Mesh(
-    new THREE.BoxGeometry(1,2,1),
-    new THREE.MeshStandardMaterial({ color:0x995522 })
+  // Realistic bear with top hat in the middle
+  funnyBear = createFunnyBearModel(
+    new THREE.Vector3(BACKROOM_CENTER.x, 0, BACKROOM_CENTER.z)
   );
-  funnyBear.position.set(BACKROOM_CENTER.x, 1.0, BACKROOM_CENTER.z);
-  funnyBear.userData = { type:"funnyBear" };
-  scene.add(funnyBear);
 
   toast("You feel uneasy…");
 }
