@@ -462,7 +462,30 @@ function createFishingPoster(x, y, z, rotY = 0){
 
 // same spot as before
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
+function createFunnyDoor(x, z, rotY = 0){
+  const doorGroup = new THREE.Group();
+  const doorMat = new THREE.MeshStandardMaterial({
+    color: 0x663300, metalness: 0.3, roughness: 0.8
+  });
 
+  const panel = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8, 3.2, 0.2),
+    doorMat
+  );
+
+  panel.position.y = 1.6;
+  doorGroup.add(panel);
+
+  doorGroup.position.set(x, 0, z);
+  doorGroup.rotation.y = rotY;
+
+  doorGroup.userData = { type:"funnyDoor", opened:false };
+
+  scene.add(doorGroup);
+  return doorGroup;
+}
+
+funnyDoor = createFunnyDoor(-19.8, 0, Math.PI/2);
 // ========== CHECKOUT COUNTER & ZONE ==========
 const counter = new THREE.Mesh(
   new THREE.BoxGeometry(6, 1.1, 2),
