@@ -2057,6 +2057,14 @@ function animate() {
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
 
+  // 🔥 FORCE SPAWN ON FIRST FRAME
+  if (!didForceSpawn && !backRoomActive) {
+    camera.position.set(-14, GROUND_Y, -14);
+    yaw = 0;
+    pitch = 0;
+    camera.rotation.set(0, 0, 0, "YXZ");
+    didForceSpawn = true;
+  }
   move(dt);
 
   verticalVelocity += GRAVITY * dt;
