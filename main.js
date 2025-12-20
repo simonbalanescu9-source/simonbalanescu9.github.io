@@ -1443,22 +1443,26 @@ function showGorillaWarning(drinkWorldPos){
   }, 5000);
 }
 function enterBackrooms(){
-  if(backRoomActive) return;
-
-  // remove store walls visually
-  floor.visible = false;
-
+  if (backRoomActive) return;
   backRoomActive = true;
 
-  // reposition player
-  camera.position.set(0,1.6,0);
+  // 1) Hide the whole supermarket (everything except camera + lights)
+  scene.traverse(obj => {
+    // keep camera
+    if (obj === camera) return;
+    // keep existing lights
+    if (obj.isLight) return;
+    obj.visible = false;
+  });
 
-  // make yellow fog
+  // 2) Teleport player to the new world
+  camera.position.set(0, 1.6, 0);
   scene.background = new THREE.Color(0xd7d900);
 
-  // build tiny 8x8 backroom box
+  // 3) Build tiny 8x8 backroom box
   const mat = new THREE.MeshStandardMaterial({
-     color:0xf8f17a, roughness:0.9
+    color: 0xf8f17a,
+    roughness: 0.9
   });
 
   const walls = [
@@ -1468,24 +1472,25 @@ function enterBackrooms(){
     new THREE.Mesh(new THREE.BoxGeometry(0.4,3.5,8), mat)
   ];
 
-  walls[0].position.set(0,1.75,-4);
-  walls[1].position.set(0,1.75,4);
-  walls[2].position.set(-4,1.75,0);
-  walls[3].position.set(4,1.75,0);
+  walls[0].position.set(0, 1.75, -4);
+  walls[1].position.set(0, 1.75,  4);
+  walls[2].position.set(-4, 1.75, 0);
+  walls[3].position.set( 4, 1.75, 0);
 
-  walls.forEach(w=>scene.add(w));
+  walls.forEach(w => scene.add(w));
 
-  // add funny bear
+  // 4) Add funny bear in the middle
   funnyBear = new THREE.Mesh(
-    new THREE.BoxGeometry(1,2,1),
-    new THREE.MeshStandardMaterial({ color:0x995522 })
+    new THREE.BoxGeometry(1, 2, 1),
+    new THREE.MeshStandardMaterial({ color: 0x995522 })
   );
-  funnyBear.position.set(0,1.0,0);
-  funnyBear.userData = { type:"funnyBear" };
+  funnyBear.position.set(0, 1.0, 0);
+  funnyBear.userData = { type: "funnyBear" };
   scene.add(funnyBear);
 
-  toast("You feel uneasy…")
+  toast("You feel uneasy…");
 }
+
 // ========== INTERACT, MUG, JUMP, WEAPONS ==========
 function handleInteract(){
   if (shopOpen){
