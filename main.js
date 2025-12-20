@@ -1,4 +1,4 @@
-// ========== BASIC SETUP ==========
+// ===== BASIC SETUP =====
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xbfd1e5);
 
@@ -10,7 +10,7 @@ const camera = new THREE.PerspectiveCamera(
 );
 const GROUND_Y = 1.6;
 camera.position.set(0, GROUND_Y, 8);
-scene.add(camera); // for viewmodel gun
+scene.add(camera); // so we can attach gun
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,7 +26,7 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
 dirLight.position.set(6, 10, 4);
 scene.add(dirLight);
 
-// ========== UI ==========
+// ===== UI =====
 const moneyText   = document.getElementById("money");
 const cartText    = document.getElementById("cart");
 const listText    = document.getElementById("list");
@@ -41,7 +41,7 @@ const btnBuyMolotov = document.getElementById("btnBuyMolotov");
 const btnBuyAK      = document.getElementById("btnBuyAK");
 const btnCloseShop  = document.getElementById("btnCloseShop");
 
-function toast(msg){
+function toast(msg) {
   if (!toastEl) {
     console.log("[TOAST]", msg);
     return;
@@ -52,13 +52,13 @@ function toast(msg){
   toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1300);
 }
 
-// ========== SIMPLE MUSIC ==========
+// ===== SIMPLE MUSIC =====
 let audioCtx = null;
 let osc = null;
 let gain = null;
 let musicOn = false;
 
-function startMusic(){
+function startMusic() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (musicOn) return;
 
@@ -76,7 +76,7 @@ function startMusic(){
   if (musicBtn) musicBtn.textContent = "🔇 Music: On";
 }
 
-function stopMusic(){
+function stopMusic() {
   if (!musicOn) return;
   osc.stop();
   osc.disconnect();
@@ -96,8 +96,14 @@ if (musicBtn) {
   });
 }
 
-// ========== INPUT (KEYBOARD / MOUSE) ==========
+// ===== INPUT (KEYBOARD/MOUSE) =====
 const keys = {};
+let yaw = 0;
+let pitch = 0;
+let verticalVelocity = 0;
+const GRAVITY = -20;
+const JUMP_SPEED = 7;
+let shopOpen = false;
 
 document.addEventListener("keydown", (e) => {
   const key = e.key.toLowerCase();
@@ -119,19 +125,7 @@ document.addEventListener("keyup", (e) => {
   keys[k] = false;
 });
 
-// Mouse look (desktop)
-let yaw = 0;
-let pitch = 0;
-
-// Jump / gravity
-let verticalVelocity = 0;
-const GRAVITY  = -20;
-const JUMP_SPEED = 7;
-
-// SHOP STATE
-let shopOpen = false;
-
-// Pointer lock change -> toggle cursor class
+// Pointer lock change
 document.addEventListener("pointerlockchange", () => {
   const locked = document.pointerLockElement === renderer.domElement;
   if (locked && !shopOpen) {
@@ -175,7 +169,7 @@ document.addEventListener("mousemove", (e) => {
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 });
 
-// Touch drag look (phones / tablets)
+// Touch look
 let touchLookActive = false;
 let lastTouchX = 0;
 let lastTouchY = 0;
@@ -191,7 +185,6 @@ renderer.domElement.addEventListener("touchstart", (e) => {
 renderer.domElement.addEventListener("touchmove", (e) => {
   if (!touchLookActive || e.touches.length !== 1) return;
   const t = e.touches[0];
-
   const dx = t.clientX - lastTouchX;
   const dy = t.clientY - lastTouchY;
   lastTouchX = t.clientX;
@@ -205,32 +198,28 @@ renderer.domElement.addEventListener("touchmove", (e) => {
   e.preventDefault();
 });
 
-renderer.domElement.addEventListener("touchend", () => {
-  touchLookActive = false;
-});
-renderer.domElement.addEventListener("touchcancel", () => {
-  touchLookActive = false;
-});
+renderer.domElement.addEventListener("touchend", () => { touchLookActive = false; });
+renderer.domElement.addEventListener("touchcancel", () => { touchLookActive = false; });
 
-// ========== GAME DATA & COLLECTIONS ==========
+// ===== GAME DATA =====
 let money = 20;
 let cartTotal = 0;
 let molotovs = 0;
 let hasAK = false;
 let ammo  = 0;
 
-const list = { Apple: 2, Milk: 1, Cereal: 1 };
+const list   = { Apple: 2, Milk: 1, Cereal: 1 };
 const bought = { Apple: 0, Milk: 0, Cereal: 0 };
 
 const MOLOTOV_COST = 15;
 const AK_COST      = 30;
 
-const items = [];
-const npcs = [];
+const items   = [];
+const npcs    = [];
 const molotovsThrown = [];
 const bullets = [];
-const clouds = [];
-const pigs   = [];
+const clouds  = [];
+const pigs    = [];
 let pigSpawnTimer = 6 + Math.random() * 10;
 
 let vendingMachine = null;
@@ -239,14 +228,14 @@ let gorillaSpeech = null;
 let gorillaTimer = null;
 let gorillaActive = false;
 let funnyDoor = null;
+
 let backRoomActive = false;
 let funnyBear = null;
-// Backrooms center (far away from store)
 const BACKROOM_CENTER = new THREE.Vector3(100, 0, 100);
 let backRoomFloor = null;
 let backRoomWalls = [];
 
-// ========== FLOOR (SUPERMARKET) ==========
+// ===== FLOOR =====
 const floorSize = 40;
 const tileCanvas = document.createElement("canvas");
 tileCanvas.width = 1024;
@@ -289,7 +278,7 @@ const floor = new THREE.Mesh(
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
 
-// ========== SANTA WALL PATTERN ==========
+// ===== SANTA WALL PATTERN =====
 const santaCanvas = document.createElement("canvas");
 santaCanvas.width = 512;
 santaCanvas.height = 512;
@@ -363,8 +352,8 @@ const santaWallMat = new THREE.MeshStandardMaterial({
   metalness: 0.0
 });
 
-// ========== WALLS ==========
-function wall(w,h,d,x,y,z){
+// ===== WALLS =====
+function wall(w,h,d,x,y,z) {
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(w,h,d),
     santaWallMat
@@ -378,7 +367,7 @@ wall(40,4,0.5, 0,2,  20);
 wall(0.5,4,40, -20,2, 0);
 wall(0.5,4,40,  20,2, 0);
 
-// ========== METAL PIPES POSTERS ==========
+// ===== METAL PIPES POSTERS =====
 function createPoster(x, y, z, rotY = 0) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
@@ -417,14 +406,13 @@ function createPoster(x, y, z, rotY = 0) {
   scene.add(poster);
 }
 
-// posters
 createPoster( 0,   2.2, -18.8,  0);
 createPoster(-18.8,2.2,   0,    Math.PI/2);
 createPoster( 18.8,2.2,   4,   -Math.PI/2);
 createPoster( 10,  2.2, 18.8,  Math.PI);
 
-// ========== FISHING POSTER ==========
-function createFishingPoster(x, y, z, rotY = 0){
+// ===== FISHING POSTER =====
+function createFishingPoster(x, y, z, rotY = 0) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 512;
@@ -463,8 +451,8 @@ function createFishingPoster(x, y, z, rotY = 0){
 
 createFishingPoster(-10, 2.2, 18.8, Math.PI);
 
-// ========== FUNNY DOOR (put it in a clear corner) ==========
-function createFunnyDoor(x, z, rotY = 0){
+// ===== FUNNY DOOR =====
+function createFunnyDoor(x, z, rotY = 0) {
   const doorGroup = new THREE.Group();
   const doorMat = new THREE.MeshStandardMaterial({
     color: 0xff00ff,
@@ -483,17 +471,14 @@ function createFunnyDoor(x, z, rotY = 0){
 
   doorGroup.position.set(x, 0, z);
   doorGroup.rotation.y = rotY;
-
   doorGroup.userData = { type:"funnyDoor" };
-
   scene.add(doorGroup);
   return doorGroup;
 }
 
-// Door in a totally empty corner (no shelves, no poster)
 funnyDoor = createFunnyDoor(15, -15, Math.PI / 4);
 
-// ========== CHECKOUT COUNTER & ZONE ==========
+// ===== CHECKOUT COUNTER & ZONE =====
 const counter = new THREE.Mesh(
   new THREE.BoxGeometry(6, 1.1, 2),
   new THREE.MeshStandardMaterial({ color: 0xdadada })
@@ -508,7 +493,7 @@ const checkoutZone = new THREE.Mesh(
 checkoutZone.position.set(-14, 0.05, 10);
 scene.add(checkoutZone);
 
-// ========== CASHIER ==========
+// ===== CASHIER =====
 let cashier = null;
 
 function createCashier(x, z) {
@@ -559,8 +544,8 @@ function createCashier(x, z) {
 
 cashier = createCashier(-14, 13);
 
-// ========== SHELVES ==========
-function shelf(x, z, length = 14){
+// ===== SHELVES =====
+function shelf(x, z, length = 14) {
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(1.2, 1.6, length),
     new THREE.MeshStandardMaterial({ color: 0xc9b48a })
@@ -568,7 +553,7 @@ function shelf(x, z, length = 14){
   base.position.set(x, 0.8, z);
   scene.add(base);
 
-  for (let i = 0; i < 4; i++){
+  for (let i = 0; i < 4; i++) {
     const slat = new THREE.Mesh(
       new THREE.BoxGeometry(1.3, 0.08, length),
       new THREE.MeshStandardMaterial({ color: 0xb99f6e })
@@ -577,6 +562,7 @@ function shelf(x, z, length = 14){
     scene.add(slat);
   }
 }
+
 shelf(-6, -6, 14);
 shelf( 0, -6, 14);
 shelf( 6, -6, 14);
@@ -584,11 +570,11 @@ shelf(-6,  6, 14);
 shelf( 0,  6, 14);
 shelf( 6,  6, 14);
 
-// ========== GUN (VIEWMODEL) ==========
+// ===== GUN (VIEWMODEL) =====
 let gun = null;
 let gunMuzzle = null;
 
-function createGun(){
+function createGun() {
   const group = new THREE.Group();
 
   const body = new THREE.Mesh(
@@ -634,13 +620,13 @@ function createGun(){
 }
 createGun();
 
-function updateGunVisibility(){
+function updateGunVisibility() {
   if (!gun) return;
   gun.visible = hasAK;
 }
 
-// ========== UI UPDATE ==========
-function updateUI(){
+// ===== UI UPDATE =====
+function updateUI() {
   if (moneyText) {
     moneyText.textContent = `Money: $${money}`;
   }
@@ -661,16 +647,18 @@ function updateUI(){
     );
     listText.textContent = `List: ${parts.join(", ")}`;
   }
-
   updateGunVisibility();
 }
 updateUI();
 
-// ========== ITEMS ==========
+// ===== ITEMS =====
 const itemMat = (color) => new THREE.MeshStandardMaterial({ color });
 
-function createItem(name, price, x, y, z, color, paid=false){
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), itemMat(color));
+function createItem(name, price, x, y, z, color, paid = false) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5,0.5,0.5),
+    itemMat(color)
+  );
   mesh.position.set(x, y, z);
   mesh.userData = { type:"item", name, price, paid };
   scene.add(mesh);
@@ -684,7 +672,7 @@ createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
 createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
 createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
 
-// ========== NPC SHOPPERS ==========
+// ===== NPC SHOPPERS =====
 function createNPC(x, z, shirtColor = 0x88aaff) {
   const npc = new THREE.Group();
 
@@ -757,8 +745,8 @@ createNPC(-10, -4);
 createNPC(4, -8, 0xaaffaa);
 createNPC(10, 5, 0xffaaaa);
 
-// ========== SKY CLOUDS ==========
-function createCloud(x, z){
+// ===== SKY CLOUDS =====
+function createCloud(x, z) {
   const cloud = new THREE.Group();
 
   const mat = new THREE.MeshStandardMaterial({
@@ -770,10 +758,8 @@ function createCloud(x, z){
   const a = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), mat);
   const b = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 16), mat);
   const c = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), mat);
-
   b.position.set(1.1, 0.2,  0.1);
   c.position.set(-1.0, 0.1, -0.1);
-
   cloud.add(a, b, c);
 
   const y = 8 + Math.random() * 2;
@@ -788,15 +774,14 @@ function createCloud(x, z){
   clouds.push(cloud);
 }
 
-// initial clouds
-for (let i = 0; i < 7; i++){
+for (let i = 0; i < 7; i++) {
   const x = -18 + Math.random() * 36;
   const z = -12 + Math.random() * 24;
   createCloud(x, z);
 }
 
-// ========== FLYING PIGS ==========
-function createFlyingPig(fromLeft){
+// ===== FLYING PIGS =====
+function createFlyingPig(fromLeft) {
   const pig = new THREE.Group();
 
   const pink  = new THREE.MeshStandardMaterial({ color: 0xffa4c4, roughness: 0.7, metalness: 0.1 });
@@ -857,14 +842,13 @@ function createFlyingPig(fromLeft){
     baseY,
     phase: Math.random() * Math.PI * 2
   };
-
   pig.rotation.y = fromLeft ? 0 : Math.PI;
 
   scene.add(pig);
   pigs.push(pig);
 }
 
-// ========== VENDING MACHINE 2.0 ==========
+// ===== VENDING MACHINE & SODA =====
 function createSodaCanMesh({ glow = false } = {}) {
   const labelCanvas = document.createElement("canvas");
   labelCanvas.width = 256;
@@ -940,7 +924,7 @@ function createSodaCanMesh({ glow = false } = {}) {
   return can;
 }
 
-function createVendingMachine(x, z){
+function createVendingMachine(x, z) {
   const vm = new THREE.Group();
 
   const body = new THREE.Mesh(
@@ -978,6 +962,7 @@ function createVendingMachine(x, z){
   glass.position.set(-0.15, 1.2, 0.475);
   vm.add(glass);
 
+  // shelves
   const shelves = 4;
   const cols = 3;
   for (let r = 0; r < shelves; r++) {
@@ -1109,31 +1094,29 @@ function createVendingMachine(x, z){
 
 vendingMachine = createVendingMachine(14, 5);
 
-function spawnVendingDrink(x, y, z){
+function spawnVendingDrink(x, y, z) {
   const drink = createSodaCanMesh({ glow: true });
   drink.position.set(x, y, z);
-
   drink.userData = {
     type: "item",
     name: "Soda",
     price: 0,
     paid: true
   };
-
   scene.add(drink);
   items.push(drink);
 }
 
-function nearVending(maxDistance = 2.5){
+function nearVending(maxDistance = 2.5) {
   if (!vendingMachine) return false;
   const dx = camera.position.x - vendingMachine.position.x;
   const dz = camera.position.z - vendingMachine.position.z;
   return (dx*dx + dz*dz) < maxDistance * maxDistance;
 }
 
-function useVendingMachine(){
+function useVendingMachine() {
   const cost = 5;
-  if (money < cost){
+  if (money < cost) {
     toast("Vending machine costs $5. Not enough money.");
     return;
   }
@@ -1149,23 +1132,23 @@ function useVendingMachine(){
   toast("🥤 A funny soda drops out!");
 }
 
-// ========== RAYCAST / HELPERS ==========
+// ===== RAYCAST HELPERS =====
 const raycaster = new THREE.Raycaster();
-const centerMouse = new THREE.Vector2(0,0);
+const centerMouse = new THREE.Vector2(0, 0);
 
-function lookHit(){
+function lookHit() {
   raycaster.setFromCamera(centerMouse, camera);
   const hits = raycaster.intersectObjects(items, false);
   return hits.length ? hits[0].object : null;
 }
 
-function nearCheckout(){
+function nearCheckout() {
   const dx = camera.position.x - checkoutZone.position.x;
   const dz = camera.position.z - checkoutZone.position.z;
   return (dx*dx + dz*dz) < (4*4);
 }
 
-function getNearestNPC(maxDistance = 3){
+function getNearestNPC(maxDistance = 3) {
   let best = null;
   let bestDistSq = maxDistance * maxDistance;
 
@@ -1173,7 +1156,7 @@ function getNearestNPC(maxDistance = 3){
     const dx = npc.position.x - camera.position.x;
     const dz = npc.position.z - camera.position.z;
     const distSq = dx*dx + dz*dz;
-    if (distSq < bestDistSq){
+    if (distSq < bestDistSq) {
       bestDistSq = distSq;
       best = npc;
     }
@@ -1182,7 +1165,7 @@ function getNearestNPC(maxDistance = 3){
   return best;
 }
 
-function nearCashier(maxDistance = 3){
+function nearCashier(maxDistance = 3) {
   if (!cashier) return false;
   const dx = camera.position.x - cashier.position.x;
   const dz = camera.position.z - cashier.position.z;
@@ -1212,8 +1195,8 @@ function getNearbySoda(maxDistance = 1.8) {
   return nearest;
 }
 
-// ========== SHOP LOGIC ==========
-function openShop(){
+// ===== SHOP LOGIC =====
+function openShop() {
   if (!shopPanel) return;
   shopPanel.classList.add("show");
   shopOpen = true;
@@ -1224,16 +1207,16 @@ function openShop(){
   document.body.classList.add("show-cursor");
 }
 
-function closeShop(){
+function closeShop() {
   if (!shopPanel) return;
   shopPanel.classList.remove("show");
   shopOpen = false;
 }
 
-// ========== SHOP ACTIONS ==========
-function buyMolotov(){
+// ===== SHOP ACTIONS =====
+function buyMolotov() {
   const cost = MOLOTOV_COST;
-  if (money < cost){
+  if (money < cost) {
     toast("Molotov costs $" + cost + ". Not enough money.");
     return;
   }
@@ -1243,13 +1226,13 @@ function buyMolotov(){
   toast("You bought 1 Molotov.");
 }
 
-function buyAK(){
+function buyAK() {
   const cost = AK_COST;
-  if (hasAK){
+  if (hasAK) {
     toast("You already have an AK-47.");
     return;
   }
-  if (money < cost){
+  if (money < cost) {
     toast("AK-47 costs $" + cost + ". Not enough money.");
     return;
   }
@@ -1260,27 +1243,27 @@ function buyAK(){
   toast("You bought an AK-47 for $" + cost + ".");
 }
 
-if (btnBuyMolotov){
-  btnBuyMolotov.addEventListener("click", (e)=>{
+if (btnBuyMolotov) {
+  btnBuyMolotov.addEventListener("click", (e) => {
     e.preventDefault();
     buyMolotov();
   });
 }
-if (btnBuyAK){
-  btnBuyAK.addEventListener("click", (e)=>{
+if (btnBuyAK) {
+  btnBuyAK.addEventListener("click", (e) => {
     e.preventDefault();
     buyAK();
   });
 }
-if (btnCloseShop){
-  btnCloseShop.addEventListener("click", (e)=>{
+if (btnCloseShop) {
+  btnCloseShop.addEventListener("click", (e) => {
     e.preventDefault();
     closeShop();
   });
 }
 
-// ========== FUNNY GORILLA PROPHECY ==========
-function createGorilla(position){
+// ===== GORILLA PROPHECY =====
+function createGorilla(position) {
   const g = new THREE.Group();
 
   const darkFur  = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
@@ -1340,7 +1323,6 @@ function createGorilla(position){
   g.add(leftLeg, rightLeg);
 
   g.rotation.x = -0.08;
-
   g.position.copy(position);
   g.lookAt(camera.position.x, g.position.y + 1.2, camera.position.z);
 
@@ -1348,7 +1330,7 @@ function createGorilla(position){
   return g;
 }
 
-function createGorillaSpeech(position){
+function createGorillaSpeech(position) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 256;
@@ -1383,20 +1365,17 @@ function createGorillaSpeech(position){
     new THREE.PlaneGeometry(3.4, 1.7),
     mat
   );
-
   plane.position.copy(position).add(new THREE.Vector3(0, 2.3, 0));
-
   plane.lookAt(
     camera.position.x,
     plane.position.y,
     camera.position.z
   );
-
   scene.add(plane);
   return plane;
 }
 
-function showGorillaWarning(drinkWorldPos){
+function showGorillaWarning(drinkWorldPos) {
   if (gorillaActive) return;
 
   gorillaActive = true;
@@ -1417,7 +1396,6 @@ function showGorillaWarning(drinkWorldPos){
   toast("🦍 The gorilla says: DON'T DRINK THAT!");
 
   if (gorillaTimer) clearTimeout(gorillaTimer);
-
   gorillaTimer = setTimeout(() => {
     if (gorilla) {
       scene.remove(gorilla);
@@ -1431,21 +1409,18 @@ function showGorillaWarning(drinkWorldPos){
   }, 5000);
 }
 
-// ========== BACKROOMS ==========
-function enterBackrooms(){
-  if(backRoomActive) return;
+// ===== BACKROOMS =====
+function enterBackrooms() {
+  if (backRoomActive) return;
   backRoomActive = true;
 
-  // move player to backrooms and reset look
   camera.position.set(BACKROOM_CENTER.x, GROUND_Y, BACKROOM_CENTER.z);
   yaw = 0;
   pitch = 0;
   camera.rotation.set(0, 0, 0, "YXZ");
 
-  // spooky yellow background
   scene.background = new THREE.Color(0xd7d900);
 
-  // BACKROOM FLOOR
   backRoomFloor = new THREE.Mesh(
     new THREE.PlaneGeometry(10, 10),
     new THREE.MeshStandardMaterial({ color: 0xf0e98c, roughness: 0.9 })
@@ -1454,7 +1429,6 @@ function enterBackrooms(){
   backRoomFloor.position.set(BACKROOM_CENTER.x, 0, BACKROOM_CENTER.z);
   scene.add(backRoomFloor);
 
-  // BACKROOM WALLS (a small box around the player)
   const wallMat = new THREE.MeshStandardMaterial({ color: 0xf8f17a, roughness: 0.9 });
 
   const wN = new THREE.Mesh(new THREE.BoxGeometry(10, 3.5, 0.4), wallMat);
@@ -1470,7 +1444,6 @@ function enterBackrooms(){
   backRoomWalls = [wN, wS, wW, wE];
   backRoomWalls.forEach(w => scene.add(w));
 
-  // FUNNY BEAR IN THE MIDDLE
   funnyBear = new THREE.Mesh(
     new THREE.BoxGeometry(1,2,1),
     new THREE.MeshStandardMaterial({ color:0x995522 })
@@ -1482,39 +1455,38 @@ function enterBackrooms(){
   toast("You feel uneasy…");
 }
 
-
-// ========== INTERACT, MUG, JUMP, WEAPONS ==========
-function handleInteract(){
-  if (shopOpen){
+// ===== INTERACT / MUG / JUMP / WEAPONS =====
+function handleInteract() {
+  if (shopOpen) {
     closeShop();
     return;
   }
 
-  // BACKROOM MODE: only interact with bear
+  // backrooms: only bear
   if (backRoomActive) {
     if (funnyBear) {
       raycaster.setFromCamera(centerMouse, camera);
       const bearHit = raycaster.intersectObject(funnyBear, true);
-      if(bearHit.length){
+      if (bearHit.length) {
         toast("har har har har");
       }
     }
     return;
   }
 
-  // 0) Check funny door FIRST so soda/items behind it don't "steal" the hit
+  // funny door first
   raycaster.setFromCamera(centerMouse, camera);
   const doorHit = raycaster.intersectObject(funnyDoor, true);
-  if (doorHit.length){
+  if (doorHit.length) {
     toast("The door swings open...");
     enterBackrooms();
     return;
   }
 
-  // 1) Grab Soda near you (triggers gorilla)
+  // soda near you
   const nearbySoda = getNearbySoda(1.8);
-  if (nearbySoda){
-    const data = nearbySoda.userData || {};
+  if (nearbySoda) {
+    const data  = nearbySoda.userData || {};
     const name  = data.name || "Item";
     const price = data.price || 0;
     const paid  = data.paid || false;
@@ -1545,10 +1517,10 @@ function handleInteract(){
     return;
   }
 
-  // 2) Interact with item you're looking at
+  // item you look at
   const hit = lookHit();
-  if (hit){
-    const data = hit.userData || {};
+  if (hit) {
+    const data  = hit.userData || {};
     const name  = data.name || "Item";
     const price = data.price || 0;
     const paid  = data.paid || false;
@@ -1575,13 +1547,13 @@ function handleInteract(){
     return;
   }
 
-  // 3) Zones & vending
-  if (nearCashier()){
+  // zones / vending
+  if (nearCashier()) {
     openShop();
     return;
   }
 
-  if (nearCheckout()){
+  if (nearCheckout()) {
     if (cartTotal === 0) {
       toast("Your cart is empty.");
       return;
@@ -1596,13 +1568,13 @@ function handleInteract(){
     return;
   }
 
-  if (nearVending()){
+  if (nearVending()) {
     useVendingMachine();
     return;
   }
 }
 
-function handleMug(){
+function handleMug() {
   if (backRoomActive) {
     toast("No one here to mug… just you and the bear.");
     return;
@@ -1614,7 +1586,7 @@ function handleMug(){
     return;
   }
 
-  if (!npc.userData || npc.userData.wallet <= 0){
+  if (!npc.userData || npc.userData.wallet <= 0) {
     toast("They have no money left.");
     return;
   }
@@ -1629,14 +1601,14 @@ function handleMug(){
   updateUI();
 }
 
-function handleJump(){
+function handleJump() {
   if (camera.position.y <= GROUND_Y + 0.01 && verticalVelocity === 0) {
     verticalVelocity = JUMP_SPEED;
   }
 }
 
-function throwMolotov(){
-  if (molotovs <= 0){
+function throwMolotov() {
+  if (molotovs <= 0) {
     toast("No Molotovs! Buy one from the egg.");
     return;
   }
@@ -1653,11 +1625,9 @@ function throwMolotov(){
     })
   );
 
-  const startPos = new THREE.Vector3();
-  startPos.copy(camera.position);
+  const startPos = camera.position.clone();
   startPos.y -= 0.2;
   bottle.position.copy(startPos);
-
   scene.add(bottle);
 
   const dir = new THREE.Vector3(0, 0, -1).applyEuler(camera.rotation).normalize();
@@ -1668,7 +1638,7 @@ function throwMolotov(){
   molotovsThrown.push({ mesh: bottle, velocity });
 }
 
-function explodeMolotov(position){
+function explodeMolotov(position) {
   const flash = new THREE.Mesh(
     new THREE.SphereGeometry(0.8, 16, 16),
     new THREE.MeshStandardMaterial({
@@ -1686,19 +1656,19 @@ function explodeMolotov(position){
   const fade = setInterval(() => {
     opacity -= 0.1;
     flash.material.opacity = Math.max(0, opacity);
-    if (opacity <= 0){
+    if (opacity <= 0) {
       clearInterval(fade);
       scene.remove(flash);
     }
   }, 50);
 }
 
-function shootAK(){
-  if (!hasAK){
+function shootAK() {
+  if (!hasAK) {
     toast("You don't have a gun. Buy one at the egg.");
     return;
   }
-  if (ammo <= 0){
+  if (ammo <= 0) {
     toast("Out of ammo!");
     return;
   }
@@ -1711,7 +1681,7 @@ function shootAK(){
     .normalize();
 
   let origin;
-  if (gunMuzzle){
+  if (gunMuzzle) {
     origin = new THREE.Vector3();
     gunMuzzle.getWorldPosition(origin);
   } else {
@@ -1724,12 +1694,12 @@ function shootAK(){
   if (hits.length > 0) {
     let obj = hits[0].object;
     let hitNpc = null;
-    while (obj && !hitNpc){
+    while (obj && !hitNpc) {
       if (npcs.includes(obj)) hitNpc = obj;
       else obj = obj.parent;
     }
 
-    if (hitNpc){
+    if (hitNpc) {
       scene.remove(hitNpc);
       const idx = npcs.indexOf(hitNpc);
       if (idx !== -1) npcs.splice(idx, 1);
@@ -1737,7 +1707,7 @@ function shootAK(){
     }
   }
 
-  if (gunMuzzle){
+  if (gunMuzzle) {
     const muzzlePos = new THREE.Vector3();
     gunMuzzle.getWorldPosition(muzzlePos);
 
@@ -1761,7 +1731,7 @@ function shootAK(){
   }
 }
 
-// ========== TOUCH CONTROLS ==========
+// ===== TOUCH CONTROLS =====
 const btnUp       = document.getElementById("btnUp");
 const btnDown     = document.getElementById("btnDown");
 const btnLeft     = document.getElementById("btnLeft");
@@ -1772,7 +1742,7 @@ const btnJump     = document.getElementById("btnJump");
 const btnThrow    = document.getElementById("btnThrow");
 const btnFire     = document.getElementById("btnFire");
 
-function bindHoldButton(btn, keyName){
+function bindHoldButton(btn, keyName) {
   if (!btn) return;
   const start = (e) => {
     e.preventDefault();
@@ -1796,53 +1766,34 @@ bindHoldButton(btnDown,  "s");
 bindHoldButton(btnLeft,  "a");
 bindHoldButton(btnRight, "d");
 
-if (btnInteract){
-  const h = (e) => {
-    e.preventDefault();
-    handleInteract();
-  };
+if (btnInteract) {
+  const h = (e) => { e.preventDefault(); handleInteract(); };
   btnInteract.addEventListener("click", h);
   btnInteract.addEventListener("touchstart", h);
 }
-
-if (btnMug){
-  const h2 = (e) => {
-    e.preventDefault();
-    handleMug();
-  };
+if (btnMug) {
+  const h2 = (e) => { e.preventDefault(); handleMug(); };
   btnMug.addEventListener("click", h2);
   btnMug.addEventListener("touchstart", h2);
 }
-
-if (btnJump){
-  const h3 = (e) => {
-    e.preventDefault();
-    handleJump();
-  };
+if (btnJump) {
+  const h3 = (e) => { e.preventDefault(); handleJump(); };
   btnJump.addEventListener("click", h3);
   btnJump.addEventListener("touchstart", h3);
 }
-
-if (btnThrow){
-  const h4 = (e) => {
-    e.preventDefault();
-    throwMolotov();
-  };
+if (btnThrow) {
+  const h4 = (e) => { e.preventDefault(); throwMolotov(); };
   btnThrow.addEventListener("click", h4);
   btnThrow.addEventListener("touchstart", h4);
 }
-
-if (btnFire){
-  const h5 = (e) => {
-    e.preventDefault();
-    shootAK();
-  };
+if (btnFire) {
+  const h5 = (e) => { e.preventDefault(); shootAK(); };
   btnFire.addEventListener("click", h5);
   btnFire.addEventListener("touchstart", h5);
 }
 
-// ========== MOVEMENT & LOOP ==========
-function move(dt){
+// ===== MOVEMENT & LOOP =====
+function move(dt) {
   const speed = (keys["shift"] ? 6.5 : 4.2);
   const forward = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   forward.y = 0; forward.normalize();
@@ -1860,7 +1811,6 @@ function move(dt){
   }
 
   if (backRoomActive) {
-    // clamp around backrooms box
     const minX = BACKROOM_CENTER.x - 3.6;
     const maxX = BACKROOM_CENTER.x + 3.6;
     const minZ = BACKROOM_CENTER.z - 3.6;
@@ -1868,7 +1818,6 @@ function move(dt){
     camera.position.x = Math.max(minX, Math.min(maxX, camera.position.x));
     camera.position.z = Math.max(minZ, Math.min(maxZ, camera.position.z));
   } else {
-    // supermarket bounds
     camera.position.x = Math.max(-18.5, Math.min(18.5, camera.position.x));
     camera.position.z = Math.max(-18.5, Math.min(18.5, camera.position.z));
   }
@@ -1876,7 +1825,7 @@ function move(dt){
 
 let last = performance.now();
 
-function animate(){
+function animate() {
   requestAnimationFrame(animate);
   const now = performance.now();
   const dt = Math.min(0.033, (now - last) / 1000);
@@ -1886,8 +1835,7 @@ function animate(){
 
   verticalVelocity += GRAVITY * dt;
   camera.position.y += verticalVelocity * dt;
-
-  if (camera.position.y <= GROUND_Y){
+  if (camera.position.y <= GROUND_Y) {
     camera.position.y = GROUND_Y;
     verticalVelocity = 0;
   }
@@ -1898,7 +1846,6 @@ function animate(){
   if (!backRoomActive) {
     npcs.forEach(npc => {
       npc.position.z += npc.userData.dir * npc.userData.speed * dt;
-
       const maxZ = 10;
       if (npc.position.z > maxZ) {
         npc.position.z = maxZ;
@@ -1914,14 +1861,14 @@ function animate(){
   }
 
   // Molotovs
-  for (let i = molotovsThrown.length - 1; i >= 0; i--){
+  for (let i = molotovsThrown.length - 1; i >= 0; i--) {
     const proj = molotovsThrown[i];
     proj.velocity.y += GRAVITY * dt * 0.5;
     proj.mesh.position.addScaledVector(proj.velocity, dt);
 
     let exploded = false;
 
-    if (proj.mesh.position.y <= 0.1){
+    if (proj.mesh.position.y <= 0.1) {
       explodeMolotov(proj.mesh.position);
       scene.remove(proj.mesh);
       molotovsThrown.splice(i, 1);
@@ -1930,14 +1877,14 @@ function animate(){
 
     if (exploded) continue;
 
-    for (let j = npcs.length - 1; j >= 0; j--){
+    for (let j = npcs.length - 1; j >= 0; j--) {
       const npc = npcs[j];
       const dx = npc.position.x - proj.mesh.position.x;
       const dz = npc.position.z - proj.mesh.position.z;
       const dy = (npc.position.y + 1.0) - proj.mesh.position.y;
       const distSq = dx*dx + dy*dy + dz*dz;
 
-      if (distSq < 1.0){
+      if (distSq < 1.0) {
         explodeMolotov(proj.mesh.position);
         scene.remove(proj.mesh);
         molotovsThrown.splice(i, 1);
@@ -1953,55 +1900,52 @@ function animate(){
   }
 
   // Bullets
-  for (let i = bullets.length - 1; i >= 0; i--){
+  for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     b.mesh.position.addScaledVector(b.velocity, dt);
     b.life -= dt;
 
     const distSq = b.mesh.position.distanceToSquared(camera.position);
-
-    if (b.life <= 0 || distSq > 2000){
+    if (b.life <= 0 || distSq > 2000) {
       scene.remove(b.mesh);
       bullets.splice(i, 1);
     }
   }
 
   // Clouds
-  for (let i = 0; i < clouds.length; i++){
+  for (let i = 0; i < clouds.length; i++) {
     const c = clouds[i];
     const data = c.userData;
     c.position.x += data.dir * data.speed * dt;
 
-    if (c.position.x > 25){
+    if (c.position.x > 25) {
       c.position.x = -25;
-    } else if (c.position.x < -25){
+    } else if (c.position.x < -25) {
       c.position.x = 25;
     }
   }
 
   // Pigs
   pigSpawnTimer -= dt;
-  if (pigSpawnTimer <= 0 && !backRoomActive){
+  if (pigSpawnTimer <= 0 && !backRoomActive) {
     const fromLeft = Math.random() > 0.5;
     createFlyingPig(fromLeft);
     pigSpawnTimer = 6 + Math.random() * 10;
   }
 
-  for (let i = pigs.length - 1; i >= 0; i--){
+  for (let i = pigs.length - 1; i >= 0; i--) {
     const pig = pigs[i];
     const data = pig.userData;
-
     pig.position.x += data.dir * data.speed * dt;
     data.phase += dt * 2.0;
     pig.position.y = data.baseY + Math.sin(data.phase) * 0.3;
 
-    if (Math.abs(pig.position.x) > 32){
+    if (Math.abs(pig.position.x) > 32) {
       scene.remove(pig);
       pigs.splice(i, 1);
     }
   }
 
-  // Keep gorilla speech facing the player
   if (gorillaSpeech) {
     gorillaSpeech.lookAt(
       camera.position.x,
@@ -2012,9 +1956,9 @@ function animate(){
 
   renderer.render(scene, camera);
 }
-
 animate();
 
+// ===== RESIZE =====
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
