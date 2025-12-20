@@ -498,6 +498,7 @@ funnyDoor.traverse(obj => {
     obj.material.depthTest = false;
   }
 });
+funnyDoor.position.y = 0.01;
 // ========== CHECKOUT COUNTER & ZONE ==========
 const counter = new THREE.Mesh(
   new THREE.BoxGeometry(6, 1.1, 2),
