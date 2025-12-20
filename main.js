@@ -222,6 +222,10 @@ const clouds  = [];
 const pigs    = [];
 let pigSpawnTimer = 6 + Math.random() * 10;
 
+// NEW: shelf collision data
+const shelfBodies = [];
+let shelfBoxes = [];
+
 let vendingMachine = null;
 let gorilla = null;
 let gorillaSpeech = null;
@@ -455,16 +459,14 @@ createFishingPoster(-10, 2.2, 18.8, Math.PI);
 function createFunnyDoor(x, z, rotY = 0){
   const doorGroup = new THREE.Group();
 
-  // wooden material instead of purple neon
   const doorMat = new THREE.MeshStandardMaterial({
-    color: 0x8b5a2b,           // warm brown
+    color: 0x8b5a2b,
     metalness: 0.1,
     roughness: 0.8,
     emissive: new THREE.Color(0x331a0d),
     emissiveIntensity: 0.15
   });
 
-  // main door panel
   const panel = new THREE.Mesh(
     new THREE.BoxGeometry(1.8, 3.2, 0.2),
     doorMat
@@ -472,7 +474,6 @@ function createFunnyDoor(x, z, rotY = 0){
   panel.position.y = 1.6;
   doorGroup.add(panel);
 
-  // simple raised frame
   const frameMat = new THREE.MeshStandardMaterial({
     color: 0x5b3a1a,
     metalness: 0.05,
@@ -485,7 +486,6 @@ function createFunnyDoor(x, z, rotY = 0){
   frame.position.set(0, 1.6, 0.09);
   doorGroup.add(frame);
 
-  // door handle
   const handle = new THREE.Mesh(
     new THREE.CylinderGeometry(0.05, 0.05, 0.25, 12),
     new THREE.MeshStandardMaterial({
@@ -509,6 +509,7 @@ function createFunnyDoor(x, z, rotY = 0){
 
 // Door on the RIGHT wall, exactly at your starting Z so it's next to you
 funnyDoor = createFunnyDoor(18.6, 8, -Math.PI / 2);
+
 // ===== CHECKOUT COUNTER & ZONE =====
 const counter = new THREE.Mesh(
   new THREE.BoxGeometry(6, 1.1, 2),
@@ -584,6 +585,9 @@ function shelf(x, z, length = 14) {
   base.position.set(x, 0.8, z);
   scene.add(base);
 
+  // register for collision
+  shelfBodies.push(base);
+
   for (let i = 0; i < 4; i++) {
     const slat = new THREE.Mesh(
       new THREE.BoxGeometry(1.3, 0.08, length),
@@ -600,6 +604,12 @@ shelf( 6, -6, 14);
 shelf(-6,  6, 14);
 shelf( 0,  6, 14);
 shelf( 6,  6, 14);
+
+// build static bounding boxes for shelf collision
+shelfBoxes = shelfBodies.map(mesh => {
+  const box = new THREE.Box3().setFromObject(mesh);
+  return box;
+});
 
 // ===== GUN (VIEWMODEL) =====
 let gun = null;
@@ -696,12 +706,19 @@ function createItem(name, price, x, y, z, color, paid = false) {
   items.push(mesh);
 }
 
-createItem("Apple",  3, -6, 1.15, -10, 0xff4d4d);
-createItem("Apple",  3,  0, 1.15, -10, 0xff4d4d);
-createItem("Milk",   5,  6, 1.15,  -2, 0xffffff);
-createItem("Cereal", 7, -6, 0.70,   2, 0xffcc33);
-createItem("Juice",  4,  0, 0.70,   2, 0xff8844);
-createItem("Bread",  2,  6, 0.70, -10, 0xd2a679);
+// UPDATED: products placed on front of shelves rather than inside them
+
+// left aisle (shelf at x = -6, z = -6)
+createItem("Apple",  3, -5.3, 1.0, -10, 0xff4d4d);  // front of left shelf
+createItem("Cereal", 7, -5.3, 1.0,  -4, 0xffcc33);
+
+// middle aisle (shelf at x = 0, z = -6)
+createItem("Apple",  3,  0.8, 1.0,  -8, 0xff4d4d);
+createItem("Juice",  4,  0.8, 1.0,  -2, 0xff8844);
+
+// right aisle (shelf at x = 6, z = -6)
+createItem("Milk",   5,  5.2, 1.0,  -6, 0xffffff);
+createItem("Bread",  2,  5.2, 1.0, -10, 0xd2a679);
 
 // ===== NPC SHOPPERS =====
 function createNPC(x, z, shirtColor = 0x88aaff) {
@@ -1460,7 +1477,6 @@ function createFunnyBearModel(position) {
   const blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
   const noseMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
 
-  // Body
   const body = new THREE.Mesh(
     new THREE.SphereGeometry(0.7, 24, 24),
     furMat
@@ -1469,7 +1485,6 @@ function createFunnyBearModel(position) {
   body.position.set(0, 1.1, 0);
   bear.add(body);
 
-  // Belly patch
   const belly = new THREE.Mesh(
     new THREE.SphereGeometry(0.5, 24, 24),
     muzzleMat
@@ -1478,7 +1493,6 @@ function createFunnyBearModel(position) {
   belly.position.set(0, 1.05, 0.35);
   bear.add(belly);
 
-  // Head
   const head = new THREE.Mesh(
     new THREE.SphereGeometry(0.45, 24, 24),
     furMat
@@ -1486,7 +1500,6 @@ function createFunnyBearModel(position) {
   head.position.set(0, 1.85, 0.1);
   bear.add(head);
 
-  // Muzzle
   const muzzle = new THREE.Mesh(
     new THREE.SphereGeometry(0.25, 24, 24),
     muzzleMat
@@ -1495,7 +1508,6 @@ function createFunnyBearModel(position) {
   muzzle.position.set(0, 1.7, 0.45);
   bear.add(muzzle);
 
-  // Nose
   const nose = new THREE.Mesh(
     new THREE.SphereGeometry(0.08, 16, 16),
     noseMat
@@ -1503,7 +1515,6 @@ function createFunnyBearModel(position) {
   nose.position.set(0, 1.73, 0.6);
   bear.add(nose);
 
-  // Eyes
   const eyeGeo = new THREE.SphereGeometry(0.07, 16, 16);
   const leftEye = new THREE.Mesh(eyeGeo, blackMat);
   const rightEye = new THREE.Mesh(eyeGeo, blackMat);
@@ -1511,7 +1522,6 @@ function createFunnyBearModel(position) {
   rightEye.position.set(0.15, 1.85, 0.5);
   bear.add(leftEye, rightEye);
 
-  // Ears outer
   const earOuterGeo = new THREE.SphereGeometry(0.18, 16, 16);
   const leftEarOuter = new THREE.Mesh(earOuterGeo, furMat);
   const rightEarOuter = new THREE.Mesh(earOuterGeo, furMat);
@@ -1519,7 +1529,6 @@ function createFunnyBearModel(position) {
   rightEarOuter.position.set(0.28, 2.05, 0.1);
   bear.add(leftEarOuter, rightEarOuter);
 
-  // Ears inner
   const earInnerGeo = new THREE.SphereGeometry(0.12, 16, 16);
   const earInnerMat = new THREE.MeshStandardMaterial({ color: 0xf2c4c4 });
   const leftEarInner = new THREE.Mesh(earInnerGeo, earInnerMat);
@@ -1528,7 +1537,6 @@ function createFunnyBearModel(position) {
   rightEarInner.position.set(0.28, 2.06, 0.18);
   bear.add(leftEarInner, rightEarInner);
 
-  // Arms
   const armGeo = new THREE.CapsuleGeometry(0.15, 0.6, 8, 16);
   const leftArm = new THREE.Mesh(armGeo, darkerFurMat);
   const rightArm = new THREE.Mesh(armGeo, darkerFurMat);
@@ -1538,7 +1546,6 @@ function createFunnyBearModel(position) {
   rightArm.rotation.z = -0.6;
   bear.add(leftArm, rightArm);
 
-  // Legs
   const legGeo = new THREE.CapsuleGeometry(0.18, 0.5, 8, 16);
   const leftLeg = new THREE.Mesh(legGeo, darkerFurMat);
   const rightLeg = new THREE.Mesh(legGeo, darkerFurMat);
@@ -1546,7 +1553,6 @@ function createFunnyBearModel(position) {
   rightLeg.position.set(0.22, 0.55, 0.1);
   bear.add(leftLeg, rightLeg);
 
-  // Feet
   const pawGeo = new THREE.SphereGeometry(0.22, 16, 16);
   const leftPaw = new THREE.Mesh(pawGeo, muzzleMat);
   const rightPaw = new THREE.Mesh(pawGeo, muzzleMat);
@@ -1554,7 +1560,6 @@ function createFunnyBearModel(position) {
   rightPaw.position.set(0.22, 0.35, 0.25);
   bear.add(leftPaw, rightPaw);
 
-  // Top hat 🎩
   const hatMat = new THREE.MeshStandardMaterial({
     color: 0x111111,
     metalness: 0.2,
@@ -1627,7 +1632,6 @@ function enterBackrooms() {
   backRoomWalls = [wN, wS, wW, wE];
   backRoomWalls.forEach(w => scene.add(w));
 
-  // Realistic bear with top hat in the middle
   funnyBear = createFunnyBearModel(
     new THREE.Vector3(BACKROOM_CENTER.x, 0, BACKROOM_CENTER.z)
   );
@@ -1642,7 +1646,6 @@ function handleInteract() {
     return;
   }
 
-  // backrooms: only bear
   if (backRoomActive) {
     if (funnyBear) {
       raycaster.setFromCamera(centerMouse, camera);
@@ -1654,7 +1657,6 @@ function handleInteract() {
     return;
   }
 
-  // funny door first
   raycaster.setFromCamera(centerMouse, camera);
   const doorHit = raycaster.intersectObject(funnyDoor, true);
   if (doorHit.length) {
@@ -1663,7 +1665,6 @@ function handleInteract() {
     return;
   }
 
-  // soda near you
   const nearbySoda = getNearbySoda(1.8);
   if (nearbySoda) {
     const data  = nearbySoda.userData || {};
@@ -1697,7 +1698,6 @@ function handleInteract() {
     return;
   }
 
-  // item you look at
   const hit = lookHit();
   if (hit) {
     const data  = hit.userData || {};
@@ -1727,7 +1727,6 @@ function handleInteract() {
     return;
   }
 
-  // zones / vending
   if (nearCashier()) {
     openShop();
     return;
@@ -1972,34 +1971,79 @@ if (btnFire) {
   btnFire.addEventListener("touchstart", h5);
 }
 
+// ===== COLLISION HELPERS FOR SHELVES =====
+function collidesWithShelves(radius) {
+  const pos = camera.position;
+  for (let i = 0; i < shelfBoxes.length; i++) {
+    const box = shelfBoxes[i];
+    const minX = box.min.x - radius;
+    const maxX = box.max.x + radius;
+    const minZ = box.min.z - radius;
+    const maxZ = box.max.z + radius;
+
+    if (
+      pos.x > minX && pos.x < maxX &&
+      pos.z > minZ && pos.z < maxZ
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function clampBackrooms() {
+  const minX = BACKROOM_CENTER.x - 3.6;
+  const maxX = BACKROOM_CENTER.x + 3.6;
+  const minZ = BACKROOM_CENTER.z - 3.6;
+  const maxZ = BACKROOM_CENTER.z + 3.6;
+  camera.position.x = Math.max(minX, Math.min(maxX, camera.position.x));
+  camera.position.z = Math.max(minZ, Math.min(maxZ, camera.position.z));
+}
+
+function clampStore() {
+  camera.position.x = Math.max(-18.5, Math.min(18.5, camera.position.x));
+  camera.position.z = Math.max(-18.5, Math.min(18.5, camera.position.z));
+}
+
 // ===== MOVEMENT & LOOP =====
 function move(dt) {
   const speed = (keys["shift"] ? 6.5 : 4.2);
+
   const forward = new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);
   forward.y = 0; forward.normalize();
   const right = new THREE.Vector3(1,0,0).applyEuler(camera.rotation);
   right.y = 0; right.normalize();
 
-  const v = new THREE.Vector3();
-  if (keys["w"]) v.add(forward);
-  if (keys["s"]) v.sub(forward);
-  if (keys["d"]) v.add(right);
-  if (keys["a"]) v.sub(right);
-  if (v.lengthSq() > 0) {
-    v.normalize().multiplyScalar(speed * dt);
-    camera.position.add(v);
+  const wish = new THREE.Vector3();
+  if (keys["w"]) wish.add(forward);
+  if (keys["s"]) wish.sub(forward);
+  if (keys["d"]) wish.add(right);
+  if (keys["a"]) wish.sub(right);
+
+  const radius = 0.6;
+
+  if (wish.lengthSq() > 0) {
+    wish.normalize().multiplyScalar(speed * dt);
+
+    const oldPos = camera.position.clone();
+
+    // move X
+    camera.position.x += wish.x;
+    if (collidesWithShelves(radius)) {
+      camera.position.x = oldPos.x;
+    }
+
+    // move Z
+    camera.position.z += wish.z;
+    if (collidesWithShelves(radius)) {
+      camera.position.z = oldPos.z;
+    }
   }
 
   if (backRoomActive) {
-    const minX = BACKROOM_CENTER.x - 3.6;
-    const maxX = BACKROOM_CENTER.x + 3.6;
-    const minZ = BACKROOM_CENTER.z - 3.6;
-    const maxZ = BACKROOM_CENTER.z + 3.6;
-    camera.position.x = Math.max(minX, Math.min(maxX, camera.position.x));
-    camera.position.z = Math.max(minZ, Math.min(maxZ, camera.position.z));
+    clampBackrooms();
   } else {
-    camera.position.x = Math.max(-18.5, Math.min(18.5, camera.position.x));
-    camera.position.z = Math.max(-18.5, Math.min(18.5, camera.position.z));
+    clampStore();
   }
 }
 
