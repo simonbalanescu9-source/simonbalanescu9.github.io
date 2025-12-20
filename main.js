@@ -241,7 +241,9 @@ let gorillaActive = false;
 let funnyDoor = null;
 let backRoomActive = false;
 let funnyBear = null;
-
+const BACKROOM_CENTER = new THREE.Vector3(100, 0, 100);
+let backRoomFloor = null;
+let backRoomWalls = [];
 // Backrooms center (far away from store)
 const BACKROOM_CENTER = new THREE.Vector3(100, 0, 100);
 
