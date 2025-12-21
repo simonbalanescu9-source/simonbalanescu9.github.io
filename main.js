@@ -1780,7 +1780,17 @@ function handleMug() {
   npc.userData.wallet -= amount;
   money += amount;
 
-  toast("You stole $" + amount + ". They have $" + npc.userData.wallet + " left.");
+  if (npc.userData.wallet <= 0 && !npc.userData.avenger) {
+    npc.userData.wallet = 0;
+    npc.userData.avenger = true;
+    npc.userData.hasMuggedPlayer = false;
+    toast(
+      "You stole $" + amount + ". They have $0 left. They look furious and start following you..."
+    );
+  } else {
+    toast("You stole $" + amount + ". They have $" + npc.userData.wallet + " left.");
+  }
+
   updateUI();
 }
 
