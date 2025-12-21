@@ -777,18 +777,21 @@ function createNPC(x, z, shirtColor = 0x88aaff) {
   hair.position.set(0, 2.05, 0);
   npc.add(hair);
 
-  npc.position.set(x, 0, z);
+    npc.position.set(x, 0, z);
 
   npc.userData = {
     dir: Math.random() > 0.5 ? 1 : -1,
     speed: 0.8 + Math.random() * 0.6,
-    wallet: 8
+    wallet: 8,
+    avenger: false,          // NEW: becomes true once you clean them out
+    hasMuggedPlayer: false   // NEW: so they only mug you once
   };
 
   scene.add(npc);
   npcs.push(npc);
   return npc;
 }
+
 
 createNPC(-10, -4);
 createNPC(4, -8, 0xaaffaa);
