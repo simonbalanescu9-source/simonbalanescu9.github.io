@@ -2089,20 +2089,57 @@ function animate() {
 
   camera.rotation.set(pitch, yaw, 0, "YXZ");
 
-  // NPC wander
+  // NPC wander & avenger behavior
   if (!backRoomActive) {
     npcs.forEach(npc => {
-      npc.position.z += npc.userData.dir * npc.userData.speed * dt;
-      const maxZ = 10;
-      if (npc.position.z > maxZ) {
-        npc.position.z = maxZ;
-        npc.userData.dir *= -1;
-        npc.rotation.y += Math.PI;
-      }
-      if (npc.position.z < -maxZ) {
-        npc.position.z = -maxZ;
-        npc.userData.dir *= -1;
-        npc.rotation.y += Math.PI;
+      if (npc.userData && npc.userData.avenger) {
+        // --- AVENGER: slowly follow the player ---
+        const toPlayer = new THREE.Vector3(
+          camera.position.x - npc.position.x,
+          0,
+          camera.position.z - npc.position.z
+        );
+        const dist = toPlayer.length();
+
+        if (dist > 0.001) {
+          toPlayer.normalize();
+          const followSpeed = 1.0; // SLOW follow speed; tweak if you want
+          npc.position.x += toPlayer.x * followSpeed * dt;
+          npc.position.z += toPlayer.z * followSpeed * dt;
+
+          // face the player
+          npc.rotation.y = Math.atan2(
+            camera.position.x - npc.position.x,
+            camera.position.z - npc.position.z
+          );
+        }
+
+        // When they get close enough, they mug you back once
+        const mugRange = 1.0;
+        if (!npc.userData.hasMuggedPlayer && dist < mugRange) {
+          if (money > 0) {
+            money = 0; // all money gone, no way to get it back
+            updateUI();
+            toast("The furious shopper mugs you back and takes ALL your money!");
+          } else {
+            toast("The furious shopper checks your pockets, but they're empty.");
+          }
+          npc.userData.hasMuggedPlayer = true;
+        }
+      } else {
+        // --- NORMAL SHOPPER: original wandering on Z axis ---
+        npc.position.z += npc.userData.dir * npc.userData.speed * dt;
+        const maxZ = 10;
+        if (npc.position.z > maxZ) {
+          npc.position.z = maxZ;
+          npc.userData.dir *= -1;
+          npc.rotation.y += Math.PI;
+        }
+        if (npc.position.z < -maxZ) {
+          npc.position.z = -maxZ;
+          npc.userData.dir *= -1;
+          npc.rotation.y += Math.PI;
+        }
       }
     });
   }
